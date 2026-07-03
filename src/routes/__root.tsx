@@ -77,14 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "AviGest — Gestion d'élevage de volailles" },
+      { name: "description", content: "AviGest : gérez vos lots, la croissance, la mortalité, l'alimentation, les finances et les ventes de votre élevage de volailles. Simple et puissant." },
+      { name: "author", content: "AviGest" },
+      { property: "og:title", content: "AviGest — Gestion d'élevage de volailles" },
+      { property: "og:description", content: "Suivez lots, finances, ventes et rentabilité de votre élevage avicole depuis votre téléphone." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

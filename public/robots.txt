@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /lots
+Disallow: /finance
+Disallow: /sales
+Disallow: /stock
+Disallow: /buildings
+Disallow: /analytics
+Disallow: /notifications
+Disallow: /settings
