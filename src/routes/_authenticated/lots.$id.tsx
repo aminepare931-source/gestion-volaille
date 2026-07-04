@@ -321,8 +321,14 @@ function LotDetail() {
             <div className="flex justify-end">
               <FormDialog title="Nouvelle vente" fields={saleFields}
                 onSubmit={async (v) => {
-                  const total = Number(v.quantity) * Number(v.unit_price);
-                  await insertSale.mutateAsync({ ...v, lot_id: id, total });
+                  const total =
+                    v.mode === "kg"
+                      ? Number(v.total_weight) * Number(v.unit_price)
+                      : Number(v.quantity) * Number(v.unit_price);
+                  const { mode, total_weight, ...rest } = v;
+                  void mode;
+                  void total_weight;
+                  await insertSale.mutateAsync({ ...rest, lot_id: id, total });
                 }} />
             </div>
             <RecordList
