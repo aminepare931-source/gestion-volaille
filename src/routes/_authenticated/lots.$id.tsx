@@ -9,6 +9,8 @@ import {
   Wallet,
   ShoppingCart,
   Trash2,
+  Pencil,
+  FileDown,
 } from "lucide-react";
 import {
   LineChart,
