@@ -196,10 +196,22 @@ function LotDetail() {
         title={lot.name}
         subtitle={`${lot.breed || "—"} · ${ageInDays(lot.arrival_date)} jours`}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant={lot.status === "active" ? "default" : "secondary"}>
               {lot.status === "active" ? "En cours" : "Terminé"}
             </Badge>
+            <FormDialog
+              title="Modifier le lot"
+              fields={editFields}
+              submitLabel="Enregistrer les modifications"
+              trigger={<Button variant="outline" size="sm"><Pencil className="mr-1 h-4 w-4" /> Modifier</Button>}
+              onSubmit={async (v) =>
+                await updateLot.mutateAsync({ id, values: { ...v, building_id: v.building_id || null } })
+              }
+            />
+            <Button variant="outline" size="sm" onClick={buildPdf}>
+              <FileDown className="mr-1 h-4 w-4" /> PDF
+            </Button>
             <Button
               variant="outline"
               size="sm"
