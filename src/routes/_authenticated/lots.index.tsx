@@ -9,6 +9,7 @@ import {
   useLots,
   useBuildings,
   useMortalityRecords,
+  useSales,
   useInsert,
   lotAlive,
   lotDeaths,
@@ -24,6 +25,7 @@ function LotsPage() {
   const { data: lots = [] } = useLots();
   const { data: buildings = [] } = useBuildings();
   const { data: mortality = [] } = useMortalityRecords();
+  const { data: sales = [] } = useSales();
   const insert = useInsert("lots");
   const [filter, setFilter] = useState<"all" | "active" | "finished">("all");
 
@@ -85,7 +87,7 @@ function LotsPage() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((l) => {
-              const alive = lotAlive(l, mortality);
+              const alive = lotAlive(l, mortality, sales);
               const deaths = lotDeaths(l.id, mortality);
               const rate = l.initial_count > 0 ? (deaths / l.initial_count) * 100 : 0;
               return (
