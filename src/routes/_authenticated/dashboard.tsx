@@ -31,6 +31,7 @@ import {
   lotDeaths,
 } from "@/lib/data";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { WeatherCard } from "@/components/WeatherCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -46,7 +47,7 @@ function Dashboard() {
   const cur = farm?.currency ?? "FCFA";
 
   const activeLots = lots.filter((l) => l.status === "active");
-  const totalAlive = lots.reduce((s, l) => s + lotAlive(l, mortality), 0);
+  const totalAlive = lots.reduce((s, l) => s + lotAlive(l, mortality, sales), 0);
   const totalInitial = lots.reduce((s, l) => s + l.initial_count, 0);
   const totalDeaths = lots.reduce((s, l) => s + lotDeaths(l.id, mortality), 0);
   const mortalityRate = totalInitial > 0 ? (totalDeaths / totalInitial) * 100 : 0;
@@ -91,6 +92,8 @@ function Dashboard() {
             </Link>
           </Button>
         </div>
+
+        <WeatherCard />
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">

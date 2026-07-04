@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   Feather,
+  Bot,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,13 +25,14 @@ const nav = [
   { to: "/stock", label: "Stock", icon: Package },
   { to: "/finance", label: "Finances", icon: Wallet },
   { to: "/sales", label: "Ventes", icon: ShoppingCart },
+  { to: "/assistant", label: "Assistant IA", icon: Bot },
   { to: "/analytics", label: "Analyses", icon: BarChart3 },
   { to: "/notifications", label: "Alertes", icon: Bell },
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 
 // Bottom bar shows the 5 most important destinations on mobile.
-const bottomNav = [nav[0], nav[1], nav[3], nav[4], nav[5]];
+const bottomNav = [nav[0], nav[1], nav[6], nav[3], nav[4]];
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -52,7 +54,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Feather className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold tracking-tight">AviGest</span>
+          <span className="text-lg font-bold tracking-tight">Ma Volaille</span>
         </div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((n) => {

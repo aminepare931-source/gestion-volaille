@@ -87,7 +87,7 @@ function LotDetail() {
   const lotSales = sales.filter((s) => s.lot_id === id);
 
   const deaths = lotDeaths(id, mortality);
-  const alive = lotAlive(lot, mortality);
+  const alive = lotAlive(lot, mortality, sales);
   const sold = lotSold(id, sales);
   const feedCost = lotFeed.reduce((s, f) => s + Number(f.cost), 0);
   const feedKg = lotFeed.reduce((s, f) => s + Number(f.quantity_kg), 0);

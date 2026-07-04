@@ -132,8 +132,8 @@ export function lotDeaths(lotId: string, mortality: MortalityRecord[]): number {
   return mortality.filter((m) => m.lot_id === lotId).reduce((s, m) => s + m.count, 0);
 }
 
-export function lotAlive(lot: Lot, mortality: MortalityRecord[]): number {
-  return Math.max(0, lot.initial_count - lotDeaths(lot.id, mortality));
+export function lotAlive(lot: Lot, mortality: MortalityRecord[], sales: Sale[] = []): number {
+  return Math.max(0, lot.initial_count - lotDeaths(lot.id, mortality) - lotSold(lot.id, sales));
 }
 
 export function lotSold(lotId: string, sales: Sale[]): number {

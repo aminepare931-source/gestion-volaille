@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/AppLayout";
 import { FormDialog, FieldDef } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useBuildings, useLots, useMortalityRecords, useInsert, lotAlive } from "@/lib/data";
+import { useBuildings, useLots, useMortalityRecords, useSales, useInsert, lotAlive } from "@/lib/data";
 import { formatNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/buildings")({
@@ -15,6 +15,7 @@ function BuildingsPage() {
   const { data: buildings = [] } = useBuildings();
   const { data: lots = [] } = useLots();
   const { data: mortality = [] } = useMortalityRecords();
+  const { data: sales = [] } = useSales();
   const insert = useInsert("buildings");
 
   const fields: FieldDef[] = [
@@ -38,7 +39,7 @@ function BuildingsPage() {
         {buildings.map((b) => {
           const activeLots = lots.filter((l) => l.building_id === b.id && l.status === "active");
           const pastLots = lots.filter((l) => l.building_id === b.id).length;
-          const occupancy = activeLots.reduce((s, l) => s + lotAlive(l, mortality), 0);
+          const occupancy = activeLots.reduce((s, l) => s + lotAlive(l, mortality, sales), 0);
           const pct = b.capacity > 0 ? Math.min(100, (occupancy / b.capacity) * 100) : 0;
           return (
             <div key={b.id} className="rounded-2xl border bg-card p-4 shadow-sm">
