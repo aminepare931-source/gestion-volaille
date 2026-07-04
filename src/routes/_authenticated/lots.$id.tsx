@@ -37,6 +37,7 @@ import {
   useWeightRecords,
   useSales,
   useTransactions,
+  useStockItems,
   useInsert,
   useUpdate,
   useDelete,
@@ -45,6 +46,7 @@ import {
   lotSold,
 } from "@/lib/data";
 import { formatMoney, formatNumber, formatDate, ageInDays } from "@/lib/format";
+import { exportLotPdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/_authenticated/lots/$id")({
   component: LotDetail,
