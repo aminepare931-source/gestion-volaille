@@ -133,11 +133,61 @@ function LotDetail() {
     { name: "record_date", label: "Date", type: "date", defaultValue: today() },
   ];
   const saleFields: FieldDef[] = [
-    { name: "quantity", label: "Quantité vendue", type: "number", required: true },
-    { name: "unit_price", label: "Prix unitaire", type: "number", required: true },
+    { name: "quantity", label: "Nombre de volailles vendues", type: "number", required: true },
+    {
+      name: "mode",
+      label: "Mode de vente",
+      type: "select",
+      defaultValue: "tete",
+      options: [
+        { value: "tete", label: "Prix à la tête" },
+        { value: "kg", label: "Prix au kilo (poids)" },
+      ],
+    },
+    { name: "total_weight", label: "Poids total (kg) — si vente au kilo", type: "number" },
+    { name: "unit_price", label: "Prix (par tête ou par kg)", type: "number", required: true },
     { name: "client", label: "Client" },
     { name: "record_date", label: "Date", type: "date", defaultValue: today() },
   ];
+
+  const editFields: FieldDef[] = [
+    { name: "name", label: "Nom du lot", required: true, defaultValue: lot.name },
+    { name: "breed", label: "Race", defaultValue: lot.breed ?? "" },
+    { name: "arrival_date", label: "Date d'arrivée", type: "date", defaultValue: lot.arrival_date },
+    { name: "initial_count", label: "Nombre de poussins", type: "number", required: true, defaultValue: lot.initial_count },
+    { name: "purchase_cost", label: "Coût d'achat total", type: "number", defaultValue: Number(lot.purchase_cost) },
+    {
+      name: "building_id",
+      label: "Bâtiment",
+      type: "select",
+      defaultValue: lot.building_id ?? "",
+      options: buildings.map((b) => ({ value: b.id, label: b.name })),
+    },
+  ];
+
+  function buildPdf() {
+    exportLotPdf({
+      lotName: lot.name,
+      breed: lot.breed ?? "",
+      farmName: farm?.name ?? "Ma Volaille",
+      currency: cur,
+      arrivalDate: lot.arrival_date,
+      ageDays: ageInDays(lot.arrival_date),
+      initialCount: lot.initial_count,
+      alive,
+      deaths,
+      sold,
+      feedKg,
+      totalCost,
+      revenue,
+      profit,
+      costPerBird,
+      feed: lotFeed.map((f) => ({ date: f.record_date, type: f.feed_type, kg: Number(f.quantity_kg), cost: Number(f.cost) })),
+      health: lotHealth.map((h) => ({ date: h.record_date, name: h.name, type: h.type === "vaccine" ? "Vaccin" : "Traitement", cost: Number(h.cost) })),
+      mortality: lotMort.map((m) => ({ date: m.record_date, count: m.count, cause: m.cause || "—" })),
+      sales: lotSales.map((s) => ({ date: s.record_date, qty: s.quantity, client: s.client || "—", total: Number(s.total) })),
+    });
+  }
 
   return (
     <>
