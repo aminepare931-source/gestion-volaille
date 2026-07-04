@@ -31,6 +31,7 @@ import {
   lotDeaths,
 } from "@/lib/data";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { WeatherCard } from "@/components/WeatherCard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,

@@ -15,8 +15,8 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Connexion — AviGest" },
-      { name: "description", content: "Connectez-vous à AviGest pour gérer votre élevage de volailles." },
+      { title: "Connexion — Ma Volaille" },
+      { name: "description", content: "Connectez-vous à Ma Volaille pour gérer votre élevage de volailles." },
     ],
   }),
   component: AuthPage,
@@ -76,7 +76,7 @@ function AuthPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
             <Feather className="h-7 w-7" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold tracking-tight">AviGest</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight">Ma Volaille</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Gestion simple et puissante de votre élevage
           </p>
