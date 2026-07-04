@@ -20,6 +20,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBuildingsRouteImport } from './routes/_authenticated/buildings'
+import { Route as AuthenticatedAssistantRouteImport } from './routes/_authenticated/assistant'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedLotsIndexRouteImport } from './routes/_authenticated/lots.index'
 import { Route as AuthenticatedLotsIdRouteImport } from './routes/_authenticated/lots.$id'
@@ -79,6 +80,11 @@ const AuthenticatedBuildingsRoute = AuthenticatedBuildingsRouteImport.update({
   path: '/buildings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAssistantRoute = AuthenticatedAssistantRouteImport.update({
+  id: '/assistant',
+  path: '/assistant',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
   '/buildings': typeof AuthenticatedBuildingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/assistant': typeof AuthenticatedAssistantRoute
   '/buildings': typeof AuthenticatedBuildingsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/finance': typeof AuthenticatedFinanceRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/assistant': typeof AuthenticatedAssistantRoute
   '/_authenticated/buildings': typeof AuthenticatedBuildingsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/analytics'
+    | '/assistant'
     | '/buildings'
     | '/dashboard'
     | '/finance'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/analytics'
+    | '/assistant'
     | '/buildings'
     | '/dashboard'
     | '/finance'
@@ -179,6 +190,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/analytics'
+    | '/_authenticated/assistant'
     | '/_authenticated/buildings'
     | '/_authenticated/dashboard'
     | '/_authenticated/finance'
@@ -277,6 +289,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBuildingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assistant': {
+      id: '/_authenticated/assistant'
+      path: '/assistant'
+      fullPath: '/assistant'
+      preLoaderRoute: typeof AuthenticatedAssistantRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
@@ -303,6 +322,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedAssistantRoute: typeof AuthenticatedAssistantRoute
   AuthenticatedBuildingsRoute: typeof AuthenticatedBuildingsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
@@ -316,6 +336,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedAssistantRoute: AuthenticatedAssistantRoute,
   AuthenticatedBuildingsRoute: AuthenticatedBuildingsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
