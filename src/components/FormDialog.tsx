@@ -72,7 +72,7 @@ export function FormDialog({
       }
       await onSubmit(payload);
       toast.success("Enregistré");
-      setValues({});
+      setValues(initialValues ?? {});
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur");
@@ -82,7 +82,7 @@ export function FormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button size="sm">
