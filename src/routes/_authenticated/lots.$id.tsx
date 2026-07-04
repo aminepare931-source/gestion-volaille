@@ -280,7 +280,16 @@ function LotDetail() {
           <TabsContent value="feed" className="space-y-3">
             <div className="flex justify-end">
               <FormDialog title="Ajouter consommation" fields={feedFields}
-                onSubmit={async (v) => await insertFeed.mutateAsync({ ...v, lot_id: id })} />
+                onSubmit={async (v) => {
+                  await insertFeed.mutateAsync({ ...v, lot_id: id });
+                  const match = stock.find(
+                    (s) => s.category === "feed" && s.name.toLowerCase() === String(v.feed_type).toLowerCase(),
+                  );
+                  if (match) {
+                    const remaining = Math.max(0, Number(match.quantity) - Number(v.quantity_kg));
+                    await updateStock.mutateAsync({ id: match.id, values: { quantity: remaining } });
+                  }
+                }} />
             </div>
             <RecordList
               rows={lotFeed.map((f) => ({ id: f.id, main: f.feed_type, sub: `${formatNumber(Number(f.quantity_kg))} kg`, right: formatMoney(Number(f.cost), cur), date: f.record_date }))}
