@@ -38,16 +38,23 @@ export function FormDialog({
   onSubmit,
   trigger,
   submitLabel = "Enregistrer",
+  initialValues,
 }: {
   title: string;
   fields: FieldDef[];
   onSubmit: (values: Record<string, unknown>) => Promise<void>;
   trigger?: ReactNode;
   submitLabel?: string;
+  initialValues?: Record<string, unknown>;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [values, setValues] = useState<Record<string, unknown>>({});
+  const [values, setValues] = useState<Record<string, unknown>>(initialValues ?? {});
+
+  function handleOpenChange(o: boolean) {
+    if (o) setValues(initialValues ?? {});
+    setOpen(o);
+  }
 
   function set(name: string, v: unknown) {
     setValues((p) => ({ ...p, [name]: v }));
@@ -65,7 +72,7 @@ export function FormDialog({
       }
       await onSubmit(payload);
       toast.success("Enregistré");
-      setValues({});
+      setValues(initialValues ?? {});
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erreur");
@@ -75,7 +82,7 @@ export function FormDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button size="sm">

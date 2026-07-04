@@ -9,6 +9,8 @@ import {
   Wallet,
   ShoppingCart,
   Trash2,
+  Pencil,
+  FileDown,
 } from "lucide-react";
 import {
   LineChart,
@@ -35,6 +37,7 @@ import {
   useWeightRecords,
   useSales,
   useTransactions,
+  useStockItems,
   useInsert,
   useUpdate,
   useDelete,
@@ -43,6 +46,7 @@ import {
   lotSold,
 } from "@/lib/data";
 import { formatMoney, formatNumber, formatDate, ageInDays } from "@/lib/format";
+import { exportLotPdf } from "@/lib/pdf";
 
 export const Route = createFileRoute("/_authenticated/lots/$id")({
   component: LotDetail,
@@ -62,14 +66,16 @@ function LotDetail() {
   const { data: weights = [] } = useWeightRecords();
   const { data: sales = [] } = useSales();
   const { data: transactions = [] } = useTransactions();
+  const { data: stock = [] } = useStockItems();
 
   const cur = farm?.currency ?? "FCFA";
   const insertFeed = useInsert("feed_records", ["lots"]);
   const insertHealth = useInsert("health_records");
   const insertMort = useInsert("mortality_records");
   const insertWeight = useInsert("weight_records", ["lots"]);
-  const insertSale = useInsert("sales");
+  const insertSale = useInsert("sales", ["lots"]);
   const updateLot = useUpdate("lots");
+  const updateStock = useUpdate("stock_items");
   const delMort = useDelete("mortality_records");
 
   if (!lot) {
@@ -104,8 +110,17 @@ function LotDetail() {
     .sort((a, b) => a.record_date.localeCompare(b.record_date))
     .map((w) => ({ date: formatDate(w.record_date), poids: Number(w.avg_weight) }));
 
+  const feedStock = stock.filter((s) => s.category === "feed");
   const feedFields: FieldDef[] = [
-    { name: "feed_type", label: "Type d'aliment", required: true, placeholder: "Démarrage" },
+    feedStock.length > 0
+      ? {
+          name: "feed_type",
+          label: "Type d'aliment (déduit du stock)",
+          type: "select",
+          options: feedStock.map((s) => ({ value: s.name, label: `${s.name} (${formatNumber(Number(s.quantity))} ${s.unit})` })),
+          required: true,
+        }
+      : { name: "feed_type", label: "Type d'aliment", required: true, placeholder: "Démarrage" },
     { name: "quantity_kg", label: "Quantité (kg)", type: "number", required: true },
     { name: "cost", label: "Coût", type: "number" },
     { name: "record_date", label: "Date", type: "date", defaultValue: today() },
@@ -127,11 +142,62 @@ function LotDetail() {
     { name: "record_date", label: "Date", type: "date", defaultValue: today() },
   ];
   const saleFields: FieldDef[] = [
-    { name: "quantity", label: "Quantité vendue", type: "number", required: true },
-    { name: "unit_price", label: "Prix unitaire", type: "number", required: true },
+    { name: "quantity", label: "Nombre de volailles vendues", type: "number", required: true },
+    {
+      name: "mode",
+      label: "Mode de vente",
+      type: "select",
+      defaultValue: "tete",
+      options: [
+        { value: "tete", label: "Prix à la tête" },
+        { value: "kg", label: "Prix au kilo (poids)" },
+      ],
+    },
+    { name: "total_weight", label: "Poids total (kg) — si vente au kilo", type: "number" },
+    { name: "unit_price", label: "Prix (par tête ou par kg)", type: "number", required: true },
     { name: "client", label: "Client" },
     { name: "record_date", label: "Date", type: "date", defaultValue: today() },
   ];
+
+  const editFields: FieldDef[] = [
+    { name: "name", label: "Nom du lot", required: true, defaultValue: lot.name },
+    { name: "breed", label: "Race", defaultValue: lot.breed ?? "" },
+    { name: "arrival_date", label: "Date d'arrivée", type: "date", defaultValue: lot.arrival_date },
+    { name: "initial_count", label: "Nombre de poussins", type: "number", required: true, defaultValue: lot.initial_count },
+    { name: "purchase_cost", label: "Coût d'achat total", type: "number", defaultValue: Number(lot.purchase_cost) },
+    {
+      name: "building_id",
+      label: "Bâtiment",
+      type: "select",
+      defaultValue: lot.building_id ?? "",
+      options: buildings.map((b) => ({ value: b.id, label: b.name })),
+    },
+  ];
+
+  const l = lot;
+  function buildPdf() {
+    exportLotPdf({
+      lotName: l.name,
+      breed: l.breed ?? "",
+      farmName: farm?.name ?? "Ma Volaille",
+      currency: cur,
+      arrivalDate: l.arrival_date,
+      ageDays: ageInDays(l.arrival_date),
+      initialCount: l.initial_count,
+      alive,
+      deaths,
+      sold,
+      feedKg,
+      totalCost,
+      revenue,
+      profit,
+      costPerBird,
+      feed: lotFeed.map((f) => ({ date: f.record_date, type: f.feed_type, kg: Number(f.quantity_kg), cost: Number(f.cost) })),
+      health: lotHealth.map((h) => ({ date: h.record_date, name: h.name, type: h.type === "vaccine" ? "Vaccin" : "Traitement", cost: Number(h.cost) })),
+      mortality: lotMort.map((m) => ({ date: m.record_date, count: m.count, cause: m.cause || "—" })),
+      sales: lotSales.map((s) => ({ date: s.record_date, qty: s.quantity, client: s.client || "—", total: Number(s.total) })),
+    });
+  }
 
   return (
     <>
@@ -139,10 +205,22 @@ function LotDetail() {
         title={lot.name}
         subtitle={`${lot.breed || "—"} · ${ageInDays(lot.arrival_date)} jours`}
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Badge variant={lot.status === "active" ? "default" : "secondary"}>
               {lot.status === "active" ? "En cours" : "Terminé"}
             </Badge>
+            <FormDialog
+              title="Modifier le lot"
+              fields={editFields}
+              submitLabel="Enregistrer les modifications"
+              trigger={<Button variant="outline" size="sm"><Pencil className="mr-1 h-4 w-4" /> Modifier</Button>}
+              onSubmit={async (v) =>
+                await updateLot.mutateAsync({ id, values: { ...v, building_id: v.building_id || null } })
+              }
+            />
+            <Button variant="outline" size="sm" onClick={buildPdf}>
+              <FileDown className="mr-1 h-4 w-4" /> PDF
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -211,7 +289,16 @@ function LotDetail() {
           <TabsContent value="feed" className="space-y-3">
             <div className="flex justify-end">
               <FormDialog title="Ajouter consommation" fields={feedFields}
-                onSubmit={async (v) => await insertFeed.mutateAsync({ ...v, lot_id: id })} />
+                onSubmit={async (v) => {
+                  await insertFeed.mutateAsync({ ...v, lot_id: id });
+                  const match = stock.find(
+                    (s) => s.category === "feed" && s.name.toLowerCase() === String(v.feed_type).toLowerCase(),
+                  );
+                  if (match) {
+                    const remaining = Math.max(0, Number(match.quantity) - Number(v.quantity_kg));
+                    await updateStock.mutateAsync({ id: match.id, values: { quantity: remaining } });
+                  }
+                }} />
             </div>
             <RecordList
               rows={lotFeed.map((f) => ({ id: f.id, main: f.feed_type, sub: `${formatNumber(Number(f.quantity_kg))} kg`, right: formatMoney(Number(f.cost), cur), date: f.record_date }))}
@@ -243,8 +330,14 @@ function LotDetail() {
             <div className="flex justify-end">
               <FormDialog title="Nouvelle vente" fields={saleFields}
                 onSubmit={async (v) => {
-                  const total = Number(v.quantity) * Number(v.unit_price);
-                  await insertSale.mutateAsync({ ...v, lot_id: id, total });
+                  const total =
+                    v.mode === "kg"
+                      ? Number(v.total_weight) * Number(v.unit_price)
+                      : Number(v.quantity) * Number(v.unit_price);
+                  const { mode, total_weight, ...rest } = v;
+                  void mode;
+                  void total_weight;
+                  await insertSale.mutateAsync({ ...rest, lot_id: id, total });
                 }} />
             </div>
             <RecordList

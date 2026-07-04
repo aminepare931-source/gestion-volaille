@@ -24,8 +24,19 @@ function SalesPage() {
 
   const fields: FieldDef[] = [
     { name: "lot_id", label: "Lot", type: "select", options: lots.map((l) => ({ value: l.id, label: l.name })), required: true },
-    { name: "quantity", label: "Quantité", type: "number", required: true },
-    { name: "unit_price", label: "Prix unitaire", type: "number", required: true },
+    { name: "quantity", label: "Nombre de volailles vendues", type: "number", required: true },
+    {
+      name: "mode",
+      label: "Mode de vente",
+      type: "select",
+      defaultValue: "tete",
+      options: [
+        { value: "tete", label: "Prix à la tête" },
+        { value: "kg", label: "Prix au kilo (poids)" },
+      ],
+    },
+    { name: "total_weight", label: "Poids total (kg) — si vente au kilo", type: "number" },
+    { name: "unit_price", label: "Prix (par tête ou par kg)", type: "number", required: true },
     { name: "client", label: "Client" },
     { name: "record_date", label: "Date", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
   ];
@@ -36,7 +47,16 @@ function SalesPage() {
         title="Ventes"
         subtitle={`${sales.length} vente(s)`}
         action={<FormDialog title="Nouvelle vente" fields={fields} trigger={<Button>Nouvelle vente</Button>}
-          onSubmit={(v) => insert.mutateAsync({ ...v, total: Number(v.quantity) * Number(v.unit_price) })} />}
+          onSubmit={(v) => {
+            const total =
+              v.mode === "kg"
+                ? Number(v.total_weight) * Number(v.unit_price)
+                : Number(v.quantity) * Number(v.unit_price);
+            const { mode, total_weight, ...rest } = v;
+            void mode;
+            void total_weight;
+            return insert.mutateAsync({ ...rest, total });
+          }} />}
       />
       <div className="space-y-6 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3">
