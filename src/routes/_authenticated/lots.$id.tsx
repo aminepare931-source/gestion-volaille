@@ -66,14 +66,16 @@ function LotDetail() {
   const { data: weights = [] } = useWeightRecords();
   const { data: sales = [] } = useSales();
   const { data: transactions = [] } = useTransactions();
+  const { data: stock = [] } = useStockItems();
 
   const cur = farm?.currency ?? "FCFA";
   const insertFeed = useInsert("feed_records", ["lots"]);
   const insertHealth = useInsert("health_records");
   const insertMort = useInsert("mortality_records");
   const insertWeight = useInsert("weight_records", ["lots"]);
-  const insertSale = useInsert("sales");
+  const insertSale = useInsert("sales", ["lots"]);
   const updateLot = useUpdate("lots");
+  const updateStock = useUpdate("stock_items");
   const delMort = useDelete("mortality_records");
 
   if (!lot) {
