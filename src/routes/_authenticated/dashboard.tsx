@@ -46,7 +46,7 @@ function Dashboard() {
   const cur = farm?.currency ?? "FCFA";
 
   const activeLots = lots.filter((l) => l.status === "active");
-  const totalAlive = lots.reduce((s, l) => s + lotAlive(l, mortality), 0);
+  const totalAlive = lots.reduce((s, l) => s + lotAlive(l, mortality, sales), 0);
   const totalInitial = lots.reduce((s, l) => s + l.initial_count, 0);
   const totalDeaths = lots.reduce((s, l) => s + lotDeaths(l.id, mortality), 0);
   const mortalityRate = totalInitial > 0 ? (totalDeaths / totalInitial) * 100 : 0;
