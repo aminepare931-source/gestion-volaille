@@ -165,15 +165,16 @@ function LotDetail() {
     },
   ];
 
+  const l = lot;
   function buildPdf() {
     exportLotPdf({
-      lotName: lot.name,
-      breed: lot.breed ?? "",
+      lotName: l.name,
+      breed: l.breed ?? "",
       farmName: farm?.name ?? "Ma Volaille",
       currency: cur,
-      arrivalDate: lot.arrival_date,
-      ageDays: ageInDays(lot.arrival_date),
-      initialCount: lot.initial_count,
+      arrivalDate: l.arrival_date,
+      ageDays: ageInDays(l.arrival_date),
+      initialCount: l.initial_count,
       alive,
       deaths,
       sold,
