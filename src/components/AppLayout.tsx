@@ -32,7 +32,7 @@ const nav = [
 ];
 
 // Bottom bar shows the 5 most important destinations on mobile.
-const bottomNav = [nav[0], nav[1], nav[3], nav[4], nav[5]];
+const bottomNav = [nav[0], nav[1], nav[6], nav[3], nav[4]];
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
