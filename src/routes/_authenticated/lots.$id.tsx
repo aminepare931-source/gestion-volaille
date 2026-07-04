@@ -110,8 +110,17 @@ function LotDetail() {
     .sort((a, b) => a.record_date.localeCompare(b.record_date))
     .map((w) => ({ date: formatDate(w.record_date), poids: Number(w.avg_weight) }));
 
+  const feedStock = stock.filter((s) => s.category === "feed");
   const feedFields: FieldDef[] = [
-    { name: "feed_type", label: "Type d'aliment", required: true, placeholder: "Démarrage" },
+    feedStock.length > 0
+      ? {
+          name: "feed_type",
+          label: "Type d'aliment (déduit du stock)",
+          type: "select",
+          options: feedStock.map((s) => ({ value: s.name, label: `${s.name} (${formatNumber(Number(s.quantity))} ${s.unit})` })),
+          required: true,
+        }
+      : { name: "feed_type", label: "Type d'aliment", required: true, placeholder: "Démarrage" },
     { name: "quantity_kg", label: "Quantité (kg)", type: "number", required: true },
     { name: "cost", label: "Coût", type: "number" },
     { name: "record_date", label: "Date", type: "date", defaultValue: today() },
