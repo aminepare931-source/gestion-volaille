@@ -90,3 +90,30 @@ export function flockHealthScore(
   if (score >= 65) return { score, label: "Correct", tone: "warning" };
   return { score, label: "À surveiller", tone: "destructive" };
 }
+
+// ---------- Recommandations intelligentes ----------
+export function smartTips(args: {
+  lots: Lot[];
+  mortality: MortalityRecord[];
+  feed: FeedRecord[];
+  sales: Sale[];
+}): string[] {
+  const { lots, mortality, feed, sales } = args;
+  const tips: string[] = [];
+  lots
+    .filter((l) => l.status === "active")
+    .forEach((l) => {
+      const age = ageInDays(l.arrival_date);
+      const rate = l.initial_count > 0 ? (lotDeaths(l.id, mortality) / l.initial_count) * 100 : 0;
+      if (rate > 8) tips.push(`Mortalité élevée sur ${l.name} : vérifiez l'eau, la ventilation et démarrez un traitement.`);
+      if (age >= 42 && age <= 56) tips.push(`${l.name} atteint le poids commercial (${age} j) : planifiez la vente pour maximiser la marge.`);
+      const fcr = lotFCR(l, feed, sales);
+      if (fcr && fcr > 2) tips.push(`Indice de consommation élevé sur ${l.name} (${fcr.toFixed(2)}) : ajustez la ration et la qualité de l'aliment.`);
+    });
+  if (tips.length === 0) tips.push("Tout est sous contrôle. Continuez à enregistrer vos données quotidiennes pour des analyses précises.");
+  return tips.slice(0, 4);
+}
+
+function lotDeaths(lotId: string, mortality: MortalityRecord[]): number {
+  return mortality.filter((m) => m.lot_id === lotId).reduce((s, m) => s + m.count, 0);
+}
