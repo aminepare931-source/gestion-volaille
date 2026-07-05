@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { Wallet, TrendingUp, TrendingDown, Trash2 } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Trash2, Download } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
 import { FormDialog, FieldDef } from "@/components/FormDialog";
 import { Button } from "@/components/ui/button";
 import { useTransactions, useSales, useLots, useFarm, useInsert, useDelete } from "@/lib/data";
 import { formatMoney, formatDate } from "@/lib/format";
+import { exportCSV } from "@/lib/insights";
 
 export const Route = createFileRoute("/_authenticated/finance")({
   component: FinancePage,
