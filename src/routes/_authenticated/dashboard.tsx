@@ -150,6 +150,23 @@ function Dashboard() {
           </div>
         )}
 
+        {/* Smart recommendations */}
+        <div className="rounded-2xl border bg-gradient-to-br from-primary/10 to-accent/10 p-4 shadow-sm">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold">
+            <HeartPulse className="h-4 w-4 text-primary" /> Recommandations intelligentes
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {tips.map((t, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+
+
         {/* Chart */}
         <div className="rounded-2xl border bg-card p-4 shadow-sm">
           <h3 className="mb-4 font-semibold">Revenus vs Dépenses</h3>
