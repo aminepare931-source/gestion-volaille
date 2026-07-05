@@ -7,6 +7,8 @@ import {
   Plus,
   ShoppingCart,
   AlertTriangle,
+  HeartPulse,
+  Syringe,
 } from "lucide-react";
 import {
   BarChart,
@@ -32,6 +34,8 @@ import {
 } from "@/lib/data";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { WeatherCard } from "@/components/WeatherCard";
+import { flockHealthScore, upcomingVaccines } from "@/lib/insights";
+import farmHero from "@/assets/farm-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
