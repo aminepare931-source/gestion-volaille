@@ -34,8 +34,24 @@ function AnalyticsPage() {
     const sold = lotSold(l.id, sales);
     const deaths = lotDeaths(l.id, mortality);
     const survival = l.initial_count > 0 ? ((l.initial_count - deaths) / l.initial_count) * 100 : 0;
-    return { name: l.name, profit: rev - cost, cost, rev, sold, survival, costPerBird: sold > 0 ? cost / sold : 0 };
+    const fcr = lotFCR(l, feed, sales);
+    return { name: l.name, profit: rev - cost, cost, rev, sold, survival, fcr, costPerBird: sold > 0 ? cost / sold : 0 };
   });
+
+  function handleExport() {
+    exportCSV(
+      "analyses-ma-volaille",
+      perLot.map((l) => ({
+        Lot: l.name,
+        Revenus: Math.round(l.rev),
+        Cout: Math.round(l.cost),
+        Benefice: Math.round(l.profit),
+        Survie_pct: l.survival.toFixed(1),
+        FCR: l.fcr ? l.fcr.toFixed(2) : "",
+        Cout_par_poulet: Math.round(l.costPerBird),
+      })),
+    );
+  }
 
   const best = [...perLot].sort((a, b) => b.profit - a.profit)[0];
   const avgSurvival = perLot.length ? perLot.reduce((s, l) => s + l.survival, 0) / perLot.length : 0;
