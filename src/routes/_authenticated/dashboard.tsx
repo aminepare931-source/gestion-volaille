@@ -7,6 +7,8 @@ import {
   Plus,
   ShoppingCart,
   AlertTriangle,
+  HeartPulse,
+  Syringe,
 } from "lucide-react";
 import {
   BarChart,
@@ -26,12 +28,15 @@ import {
   useTransactions,
   useSales,
   useStockItems,
+  useFeedRecords,
   useFarm,
   lotAlive,
   lotDeaths,
 } from "@/lib/data";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { WeatherCard } from "@/components/WeatherCard";
+import { flockHealthScore, upcomingVaccines, smartTips } from "@/lib/insights";
+import farmHero from "@/assets/farm-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -44,6 +49,7 @@ function Dashboard() {
   const { data: transactions = [] } = useTransactions();
   const { data: sales = [] } = useSales();
   const { data: stock = [] } = useStockItems();
+  const { data: feed = [] } = useFeedRecords();
   const cur = farm?.currency ?? "FCFA";
 
   const activeLots = lots.filter((l) => l.status === "active");
@@ -70,10 +76,26 @@ function Dashboard() {
     { name: "Bénéfice", value: Math.round(profit) },
   ];
 
+  const health = flockHealthScore(lots, mortality);
+  const vaccines = upcomingVaccines(lots);
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+  const tips = smartTips({ lots, mortality, feed, sales });
+
   return (
     <>
       <PageHeader title={`Bonjour 👋`} subtitle={farm?.name ?? "Tableau de bord"} />
       <div className="space-y-6 p-4 md:p-8">
+        {/* Hero banner */}
+        <div className="relative overflow-hidden rounded-3xl border shadow-sm">
+          <img src={farmHero} alt="Élevage de volailles" width={1600} height={912} className="h-40 w-full object-cover md:h-56" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end p-5 text-white">
+            <p className="text-xs font-medium uppercase tracking-wide opacity-80">{farm?.name ?? "Votre élevage"}</p>
+            <p className="mt-1 text-2xl font-bold">{formatNumber(totalAlive)} volailles vivantes</p>
+            <p className="text-sm opacity-90">Marge globale {margin.toFixed(1)}% · Santé du troupeau {health.score}/100</p>
+          </div>
+        </div>
+
         {/* Quick actions */}
         <div className="flex flex-wrap gap-2">
           <Button asChild>
@@ -103,7 +125,47 @@ function Dashboard() {
           <StatCard label="Dépenses totales" value={formatMoney(expenses, cur)} icon={Wallet} />
           <StatCard label="Revenus totaux" value={formatMoney(revenue, cur)} icon={TrendingUp} />
           <StatCard label="Bénéfice global" value={formatMoney(profit, cur)} icon={TrendingUp} tone={profit >= 0 ? "success" : "destructive"} />
+          <StatCard label="Santé du troupeau" value={`${health.score}/100`} sub={health.label} icon={HeartPulse} tone={health.tone === "success" ? "success" : health.tone === "warning" ? "accent" : "destructive"} />
         </div>
+
+        {/* Vaccination reminders */}
+        {vaccines.length > 0 && (
+          <div className="rounded-2xl border bg-card p-4 shadow-sm">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold">
+              <Syringe className="h-4 w-4 text-primary" /> Rappels de vaccination
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {vaccines.map((v) => (
+                <li key={`${v.lotId}-${v.step.day}`} className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2">
+                  <Syringe className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="flex-1">
+                    <strong>{v.lotName}</strong> — {v.step.name} (J{v.step.day})
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Smart recommendations */}
+        <div className="rounded-2xl border bg-gradient-to-br from-primary/10 to-accent/10 p-4 shadow-sm">
+          <h3 className="mb-3 flex items-center gap-2 font-semibold">
+            <HeartPulse className="h-4 w-4 text-primary" /> Recommandations intelligentes
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {tips.map((t, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{t}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+
 
         {/* Chart */}
         <div className="rounded-2xl border bg-card p-4 shadow-sm">

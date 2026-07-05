@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Trophy, Percent, HeartPulse, Coins } from "lucide-react";
+import { Trophy, Percent, HeartPulse, Coins, Download } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
+import { Button } from "@/components/ui/button";
 import {
   useLots, useMortalityRecords, useSales, useTransactions, useFeedRecords, useHealthRecords, useFarm,
   lotAlive, lotDeaths, lotSold,
 } from "@/lib/data";
 import { formatMoney } from "@/lib/format";
+import { exportCSV, lotFCR } from "@/lib/insights";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
@@ -32,8 +34,24 @@ function AnalyticsPage() {
     const sold = lotSold(l.id, sales);
     const deaths = lotDeaths(l.id, mortality);
     const survival = l.initial_count > 0 ? ((l.initial_count - deaths) / l.initial_count) * 100 : 0;
-    return { name: l.name, profit: rev - cost, cost, rev, sold, survival, costPerBird: sold > 0 ? cost / sold : 0 };
+    const fcr = lotFCR(l, feed, sales);
+    return { name: l.name, profit: rev - cost, cost, rev, sold, survival, fcr, costPerBird: sold > 0 ? cost / sold : 0 };
   });
+
+  function handleExport() {
+    exportCSV(
+      "analyses-ma-volaille",
+      perLot.map((l) => ({
+        Lot: l.name,
+        Revenus: Math.round(l.rev),
+        Cout: Math.round(l.cost),
+        Benefice: Math.round(l.profit),
+        Survie_pct: l.survival.toFixed(1),
+        FCR: l.fcr ? l.fcr.toFixed(2) : "",
+        Cout_par_poulet: Math.round(l.costPerBird),
+      })),
+    );
+  }
 
   const best = [...perLot].sort((a, b) => b.profit - a.profit)[0];
   const avgSurvival = perLot.length ? perLot.reduce((s, l) => s + l.survival, 0) / perLot.length : 0;
@@ -47,7 +65,15 @@ function AnalyticsPage() {
 
   return (
     <>
-      <PageHeader title="Analyses" subtitle="Performance et rentabilité de la ferme" />
+      <PageHeader
+        title="Analyses"
+        subtitle="Performance et rentabilité de la ferme"
+        action={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={!perLot.length}>
+            <Download className="mr-1 h-4 w-4" /> Exporter CSV
+          </Button>
+        }
+      />
       <div className="space-y-6 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Lot le plus rentable" value={best?.name ?? "—"} icon={Trophy} tone="accent" sub={best ? formatMoney(best.profit, cur) : undefined} />
@@ -82,6 +108,7 @@ function AnalyticsPage() {
                 <tr>
                   <th className="px-4 py-2">Lot</th>
                   <th className="px-4 py-2">Survie</th>
+                  <th className="px-4 py-2">FCR</th>
                   <th className="px-4 py-2">Coût/poulet</th>
                   <th className="px-4 py-2 text-right">Bénéfice</th>
                 </tr>
@@ -91,6 +118,7 @@ function AnalyticsPage() {
                   <tr key={l.name}>
                     <td className="px-4 py-2.5 font-medium">{l.name}</td>
                     <td className="px-4 py-2.5">{l.survival.toFixed(0)}%</td>
+                    <td className="px-4 py-2.5">{l.fcr ? l.fcr.toFixed(2) : "—"}</td>
                     <td className="px-4 py-2.5">{formatMoney(l.costPerBird, cur)}</td>
                     <td className={`px-4 py-2.5 text-right font-semibold ${l.profit >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(l.profit, cur)}</td>
                   </tr>

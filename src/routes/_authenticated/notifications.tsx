@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { useStockItems, useLots, useMortalityRecords, lotDeaths } from "@/lib/data";
 import { formatNumber, ageInDays } from "@/lib/format";
+import { upcomingVaccines } from "@/lib/insights";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   component: NotificationsPage,
@@ -35,6 +36,16 @@ function NotificationsPage() {
     if (rate > 10) alerts.push({ id: `mort-${l.id}`, type: "Mortalité", icon: Skull, priority: "high", message: `Mortalité élevée sur ${l.name} (${rate.toFixed(1)}%)` });
     const age = ageInDays(l.arrival_date);
     if (age >= 40 && age <= 55) alerts.push({ id: `sale-${l.id}`, type: "Vaccin/Vente", icon: Syringe, priority: "low", message: `${l.name} approche l'âge de vente (${age} jours)` });
+  });
+
+  upcomingVaccines(lots).forEach((v) => {
+    alerts.push({
+      id: `vac-${v.lotId}-${v.step.day}`,
+      type: "Vaccination",
+      icon: Syringe,
+      priority: v.dueInDays <= 0 ? "high" : "medium",
+      message: `${v.lotName} : ${v.step.name} (J${v.step.day}) — ${v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}`,
+    });
   });
 
   const tones: Record<string, string> = {

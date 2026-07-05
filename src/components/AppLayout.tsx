@@ -17,6 +17,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { CommandSearch } from "@/components/CommandSearch";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const nav = [
   { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
@@ -55,6 +57,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Feather className="h-5 w-5" />
           </div>
           <span className="text-lg font-bold tracking-tight">Ma Volaille</span>
+        </div>
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <CommandSearch />
+          <ThemeToggle />
         </div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((n) => {
@@ -125,7 +131,13 @@ export function PageHeader({
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
-      {action}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 md:hidden">
+          <CommandSearch trigger="compact" />
+          <ThemeToggle />
+        </div>
+        {action}
+      </div>
     </div>
   );
 }

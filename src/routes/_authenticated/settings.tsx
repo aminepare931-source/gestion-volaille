@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { User, Building2, LogOut } from "lucide-react";
+import { User, Building2, LogOut, Palette } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useFarm, useUpdate } from "@/lib/data";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/hooks/use-theme";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -19,6 +21,7 @@ const CURRENCIES = ["FCFA", "EUR", "USD", "MAD", "NGN", "GHS", "XOF"];
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { theme } = useTheme();
   const { data: profile } = useProfile();
   const { data: farm } = useFarm();
   const updateProfile = useUpdate("profiles", ["profile"]);
@@ -87,6 +90,19 @@ function SettingsPage() {
             <Button onClick={saveFarm} size="sm">Enregistrer</Button>
           </div>
         </section>
+
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 font-semibold"><Palette className="h-4 w-4" /> Apparence</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Thème {theme === "dark" ? "sombre" : "clair"}</p>
+              <p className="text-xs text-muted-foreground">Basculer entre le mode clair et sombre</p>
+            </div>
+            <ThemeToggle />
+          </div>
+        </section>
+
+
 
         <Button variant="destructive" onClick={signOut} className="w-full">
           <LogOut className="mr-1 h-4 w-4" /> Déconnexion
