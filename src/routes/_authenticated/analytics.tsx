@@ -65,7 +65,15 @@ function AnalyticsPage() {
 
   return (
     <>
-      <PageHeader title="Analyses" subtitle="Performance et rentabilité de la ferme" />
+      <PageHeader
+        title="Analyses"
+        subtitle="Performance et rentabilité de la ferme"
+        action={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={!perLot.length}>
+            <Download className="mr-1 h-4 w-4" /> Exporter CSV
+          </Button>
+        }
+      />
       <div className="space-y-6 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Lot le plus rentable" value={best?.name ?? "—"} icon={Trophy} tone="accent" sub={best ? formatMoney(best.profit, cur) : undefined} />
