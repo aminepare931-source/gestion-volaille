@@ -49,6 +49,7 @@ function Dashboard() {
   const { data: transactions = [] } = useTransactions();
   const { data: sales = [] } = useSales();
   const { data: stock = [] } = useStockItems();
+  const { data: feed = [] } = useFeedRecords();
   const cur = farm?.currency ?? "FCFA";
 
   const activeLots = lots.filter((l) => l.status === "active");
