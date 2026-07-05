@@ -17,6 +17,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { CommandSearch } from "@/components/CommandSearch";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const nav = [
   { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
@@ -55,6 +57,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Feather className="h-5 w-5" />
           </div>
           <span className="text-lg font-bold tracking-tight">Ma Volaille</span>
+        </div>
+        <div className="mb-3 flex items-center gap-2 px-1">
+          <CommandSearch />
+          <ThemeToggle />
         </div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((n) => {
