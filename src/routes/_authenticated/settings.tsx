@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { User, Building2, LogOut } from "lucide-react";
+import { User, Building2, LogOut, Palette } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useFarm, useUpdate } from "@/lib/data";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTheme } from "@/hooks/use-theme";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
