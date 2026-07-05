@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { Trophy, Percent, HeartPulse, Coins } from "lucide-react";
+import { Trophy, Percent, HeartPulse, Coins, Download } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
+import { Button } from "@/components/ui/button";
 import {
   useLots, useMortalityRecords, useSales, useTransactions, useFeedRecords, useHealthRecords, useFarm,
   lotAlive, lotDeaths, lotSold,
 } from "@/lib/data";
 import { formatMoney } from "@/lib/format";
+import { exportCSV, lotFCR } from "@/lib/insights";
 
 export const Route = createFileRoute("/_authenticated/analytics")({
   component: AnalyticsPage,
