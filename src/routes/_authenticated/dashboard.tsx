@@ -74,10 +74,25 @@ function Dashboard() {
     { name: "Bénéfice", value: Math.round(profit) },
   ];
 
+  const health = flockHealthScore(lots, mortality);
+  const vaccines = upcomingVaccines(lots);
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
   return (
     <>
       <PageHeader title={`Bonjour 👋`} subtitle={farm?.name ?? "Tableau de bord"} />
       <div className="space-y-6 p-4 md:p-8">
+        {/* Hero banner */}
+        <div className="relative overflow-hidden rounded-3xl border shadow-sm">
+          <img src={farmHero} alt="Élevage de volailles" width={1600} height={912} className="h-40 w-full object-cover md:h-56" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <div className="absolute inset-0 flex flex-col justify-end p-5 text-white">
+            <p className="text-xs font-medium uppercase tracking-wide opacity-80">{farm?.name ?? "Votre élevage"}</p>
+            <p className="mt-1 text-2xl font-bold">{formatNumber(totalAlive)} volailles vivantes</p>
+            <p className="text-sm opacity-90">Marge globale {margin.toFixed(1)}% · Santé du troupeau {health.score}/100</p>
+          </div>
+        </div>
+
         {/* Quick actions */}
         <div className="flex flex-wrap gap-2">
           <Button asChild>
