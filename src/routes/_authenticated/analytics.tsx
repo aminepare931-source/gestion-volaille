@@ -108,6 +108,7 @@ function AnalyticsPage() {
                 <tr>
                   <th className="px-4 py-2">Lot</th>
                   <th className="px-4 py-2">Survie</th>
+                  <th className="px-4 py-2">FCR</th>
                   <th className="px-4 py-2">Coût/poulet</th>
                   <th className="px-4 py-2 text-right">Bénéfice</th>
                 </tr>
@@ -117,6 +118,7 @@ function AnalyticsPage() {
                   <tr key={l.name}>
                     <td className="px-4 py-2.5 font-medium">{l.name}</td>
                     <td className="px-4 py-2.5">{l.survival.toFixed(0)}%</td>
+                    <td className="px-4 py-2.5">{l.fcr ? l.fcr.toFixed(2) : "—"}</td>
                     <td className="px-4 py-2.5">{formatMoney(l.costPerBird, cur)}</td>
                     <td className={`px-4 py-2.5 text-right font-semibold ${l.profit >= 0 ? "text-success" : "text-destructive"}`}>{formatMoney(l.profit, cur)}</td>
                   </tr>
