@@ -122,7 +122,30 @@ function Dashboard() {
           <StatCard label="Dépenses totales" value={formatMoney(expenses, cur)} icon={Wallet} />
           <StatCard label="Revenus totaux" value={formatMoney(revenue, cur)} icon={TrendingUp} />
           <StatCard label="Bénéfice global" value={formatMoney(profit, cur)} icon={TrendingUp} tone={profit >= 0 ? "success" : "destructive"} />
+          <StatCard label="Santé du troupeau" value={`${health.score}/100`} sub={health.label} icon={HeartPulse} tone={health.tone === "success" ? "success" : health.tone === "warning" ? "accent" : "destructive"} />
         </div>
+
+        {/* Vaccination reminders */}
+        {vaccines.length > 0 && (
+          <div className="rounded-2xl border bg-card p-4 shadow-sm">
+            <h3 className="mb-3 flex items-center gap-2 font-semibold">
+              <Syringe className="h-4 w-4 text-primary" /> Rappels de vaccination
+            </h3>
+            <ul className="space-y-2 text-sm">
+              {vaccines.map((v) => (
+                <li key={`${v.lotId}-${v.step.day}`} className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2">
+                  <Syringe className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="flex-1">
+                    <strong>{v.lotName}</strong> — {v.step.name} (J{v.step.day})
+                  </span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Chart */}
         <div className="rounded-2xl border bg-card p-4 shadow-sm">
