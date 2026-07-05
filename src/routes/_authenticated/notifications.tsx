@@ -38,6 +38,16 @@ function NotificationsPage() {
     if (age >= 40 && age <= 55) alerts.push({ id: `sale-${l.id}`, type: "Vaccin/Vente", icon: Syringe, priority: "low", message: `${l.name} approche l'âge de vente (${age} jours)` });
   });
 
+  upcomingVaccines(lots).forEach((v) => {
+    alerts.push({
+      id: `vac-${v.lotId}-${v.step.day}`,
+      type: "Vaccination",
+      icon: Syringe,
+      priority: v.dueInDays <= 0 ? "high" : "medium",
+      message: `${v.lotName} : ${v.step.name} (J${v.step.day}) — ${v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}`,
+    });
+  });
+
   const tones: Record<string, string> = {
     high: "bg-destructive/10 text-destructive",
     medium: "bg-warning/10 text-warning",
