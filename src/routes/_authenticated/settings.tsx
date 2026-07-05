@@ -91,6 +91,19 @@ function SettingsPage() {
           </div>
         </section>
 
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
+          <h3 className="mb-4 flex items-center gap-2 font-semibold"><Palette className="h-4 w-4" /> Apparence</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">Thème {theme === "dark" ? "sombre" : "clair"}</p>
+              <p className="text-xs text-muted-foreground">Basculer entre le mode clair et sombre</p>
+            </div>
+            <ThemeToggle />
+          </div>
+        </section>
+
+
+
         <Button variant="destructive" onClick={signOut} className="w-full">
           <LogOut className="mr-1 h-4 w-4" /> Déconnexion
         </Button>
