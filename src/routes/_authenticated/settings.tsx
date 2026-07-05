@@ -21,6 +21,7 @@ const CURRENCIES = ["FCFA", "EUR", "USD", "MAD", "NGN", "GHS", "XOF"];
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { theme } = useTheme();
   const { data: profile } = useProfile();
   const { data: farm } = useFarm();
   const updateProfile = useUpdate("profiles", ["profile"]);
