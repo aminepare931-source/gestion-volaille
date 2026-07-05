@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import authBg from "@/assets/auth-bg.jpg";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
@@ -70,7 +71,11 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-secondary to-background px-4">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="absolute inset-0 -z-10">
+        <img src={authBg} alt="Élevage de volailles" className="h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+      </div>
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
