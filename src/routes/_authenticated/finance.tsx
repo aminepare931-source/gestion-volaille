@@ -45,13 +45,33 @@ function FinancePage() {
     { name: "record_date", label: "Date", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
   ];
 
+  function handleExport() {
+    exportCSV(
+      "finances-ma-volaille",
+      transactions.map((t) => ({
+        Date: t.record_date,
+        Type: t.type === "expense" ? "Dépense" : "Revenu",
+        Categorie: t.category,
+        Description: t.description || "",
+        Montant: Number(t.amount),
+      })),
+    );
+  }
+
   return (
     <>
       <PageHeader
         title="Finances"
         subtitle="Dépenses, revenus et bénéfice"
-        action={<FormDialog title="Nouvelle transaction" fields={fields} trigger={<Button>Ajouter</Button>}
-          onSubmit={(v) => insert.mutateAsync({ ...v, lot_id: v.lot_id || null })} />}
+        action={
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={!transactions.length}>
+              <Download className="mr-1 h-4 w-4" /> CSV
+            </Button>
+            <FormDialog title="Nouvelle transaction" fields={fields} trigger={<Button>Ajouter</Button>}
+              onSubmit={(v) => insert.mutateAsync({ ...v, lot_id: v.lot_id || null })} />
+          </div>
+        }
       />
       <div className="space-y-6 p-4 md:p-8">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
