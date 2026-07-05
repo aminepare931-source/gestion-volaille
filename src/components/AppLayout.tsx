@@ -131,7 +131,13 @@ export function PageHeader({
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
-      {action}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 md:hidden">
+          <CommandSearch trigger="compact" />
+          <ThemeToggle />
+        </div>
+        {action}
+      </div>
     </div>
   );
 }
