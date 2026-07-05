@@ -28,13 +28,14 @@ import {
   useTransactions,
   useSales,
   useStockItems,
+  useFeedRecords,
   useFarm,
   lotAlive,
   lotDeaths,
 } from "@/lib/data";
 import { formatMoney, formatNumber } from "@/lib/format";
 import { WeatherCard } from "@/components/WeatherCard";
-import { flockHealthScore, upcomingVaccines } from "@/lib/insights";
+import { flockHealthScore, upcomingVaccines, smartTips } from "@/lib/insights";
 import farmHero from "@/assets/farm-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
