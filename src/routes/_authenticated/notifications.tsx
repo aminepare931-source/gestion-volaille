@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { useStockItems, useLots, useMortalityRecords, lotDeaths } from "@/lib/data";
 import { formatNumber, ageInDays } from "@/lib/format";
+import { upcomingVaccines } from "@/lib/insights";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
   component: NotificationsPage,
