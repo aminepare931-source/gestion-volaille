@@ -59,7 +59,12 @@ function BuildingsPage() {
                 </div>
                 <Progress value={pct} />
               </div>
-              <p className="mt-3 text-xs text-muted-foreground">{pastLots} lot(s) au total · {activeLots.length} actif(s)</p>
+              <div className="mt-3 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{pastLots} lot(s) · {activeLots.length} actif(s)</span>
+                <span className={pct >= 90 ? "font-semibold text-destructive" : "text-muted-foreground"}>
+                  {pct >= 90 ? "Surpeuplé" : `${formatNumber(Math.max(0, b.capacity - occupancy))} places libres`}
+                </span>
+              </div>
             </div>
           );
         })}
