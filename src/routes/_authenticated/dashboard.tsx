@@ -79,6 +79,7 @@ function Dashboard() {
   const health = flockHealthScore(lots, mortality);
   const vaccines = upcomingVaccines(lots);
   const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+  const tips = smartTips({ lots, mortality, feed, sales });
 
   return (
     <>
