@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import logo from "@/assets/logo-source.png";
 import {
   LayoutDashboard,
   Bird,
@@ -11,7 +12,6 @@ import {
   Bell,
   Settings,
   LogOut,
-  Feather,
   Bot,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,9 +53,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r bg-sidebar px-3 py-5 md:flex">
         <div className="flex items-center gap-2 px-2 pb-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Feather className="h-5 w-5" />
-          </div>
+          <img
+            src={logo}
+            alt="Ma Volaille"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-xl"
+            loading="lazy"
+          />
           <span className="text-lg font-bold tracking-tight">Ma Volaille</span>
         </div>
         <div className="mb-3 flex items-center gap-2 px-1">
