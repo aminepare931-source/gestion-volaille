@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useFarm, useUpdate } from "@/lib/data";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme, PALETTES } from "@/hooks/use-theme";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -21,7 +21,7 @@ const CURRENCIES = ["FCFA", "EUR", "USD", "MAD", "NGN", "GHS", "XOF"];
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { theme } = useTheme();
+  const { theme, palette, setPalette } = useTheme();
   const { data: profile } = useProfile();
   const { data: farm } = useFarm();
   const updateProfile = useUpdate("profiles", ["profile"]);
