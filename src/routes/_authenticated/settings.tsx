@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile, useFarm, useUpdate } from "@/lib/data";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useTheme } from "@/hooks/use-theme";
+import { useTheme, PALETTES } from "@/hooks/use-theme";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsPage,
@@ -21,7 +21,7 @@ const CURRENCIES = ["FCFA", "EUR", "USD", "MAD", "NGN", "GHS", "XOF"];
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { theme } = useTheme();
+  const { theme, palette, setPalette } = useTheme();
   const { data: profile } = useProfile();
   const { data: farm } = useFarm();
   const updateProfile = useUpdate("profiles", ["profile"]);
@@ -100,7 +100,27 @@ function SettingsPage() {
             </div>
             <ThemeToggle />
           </div>
+          <div className="mt-5">
+            <p className="text-sm font-medium">Couleur d'accent</p>
+            <p className="mb-3 text-xs text-muted-foreground">Choisissez la palette de l'application</p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+              {PALETTES.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setPalette(p.id)}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border p-2 transition-colors ${
+                    palette === p.id ? "border-primary ring-2 ring-primary/40" : "border-border hover:bg-secondary"
+                  }`}
+                  aria-label={p.label}
+                >
+                  <span className="h-7 w-7 rounded-full" style={{ background: p.swatch }} />
+                  <span className="text-[11px] font-medium">{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
+
 
 
 
