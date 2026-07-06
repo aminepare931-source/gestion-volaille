@@ -128,7 +128,23 @@ function RootComponent() {
 
   useEffect(() => {
     registerServiceWorker();
-  }, []);
+    if (typeof window === "undefined") return;
+    // Persist the query cache so data stays available offline / after reload.
+    let cancelled = false;
+    (async () => {
+      const [{ persistQueryClient }, { createSyncStoragePersister }] = await Promise.all([
+        import("@tanstack/react-query-persist-client"),
+        import("@tanstack/query-sync-storage-persister"),
+      ]);
+      if (cancelled) return;
+      const persister = createSyncStoragePersister({ storage: window.localStorage, key: "mv-query-cache" });
+      persistQueryClient({ queryClient, persister, maxAge: 1000 * 60 * 60 * 24 * 7 });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [queryClient]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
