@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { User, Building2, LogOut, Palette } from "lucide-react";
+import { User, Building2, LogOut, Palette, CreditCard, Phone, Smartphone } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
