@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { Feather } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import authBg from "@/assets/auth-bg.jpg";
+import registerBg from "@/assets/register-bg.jpg";
+import logo from "@/assets/logo-mark.png";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
