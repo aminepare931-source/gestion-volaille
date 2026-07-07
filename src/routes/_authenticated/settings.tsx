@@ -134,7 +134,7 @@ function SettingsPage() {
               { name: "Orange Money", desc: "Paiement mobile", color: "#ff7900" },
               { name: "Moov Money", desc: "Paiement mobile", color: "#004b9b" },
               { name: "Wave", desc: "Paiement mobile", color: "#1dc3ff" },
-              { name: "Carte bancaire", desc: "Visa / Mastercard", color: "var(--color-primary)" },
+              { name: "Carte bancaire", desc: "Visa / Mastercard", color: "#16a34a" },
             ].map((m) => (
               <div key={m.name} className="flex items-center gap-3 rounded-xl border p-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: m.color + "22" }}>
