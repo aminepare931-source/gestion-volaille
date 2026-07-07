@@ -35,8 +35,8 @@ const nav = [
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 
-// Bottom bar shows the 5 most important destinations on mobile.
-const bottomNav = [nav[0], nav[1], nav[6], nav[3], nav[4]];
+// Bottom bar shows the 4 most important destinations on mobile; a "Plus" menu holds the rest.
+const bottomNav = [nav[0], nav[1], nav[4], nav[6]];
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
