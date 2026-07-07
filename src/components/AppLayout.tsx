@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import logo from "@/assets/logo-mark.png";
 import {
@@ -13,12 +13,14 @@ import {
   Settings,
   LogOut,
   Bot,
+  Menu,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { CommandSearch } from "@/components/CommandSearch";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 const nav = [
   { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
@@ -33,13 +35,14 @@ const nav = [
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 
-// Bottom bar shows the 5 most important destinations on mobile.
-const bottomNav = [nav[0], nav[1], nav[6], nav[3], nav[4]];
+// Bottom bar shows the 4 most important destinations on mobile; a "Plus" menu holds the rest.
+const bottomNav = [nav[0], nav[1], nav[4], nav[6]];
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function signOut() {
     await qc.cancelQueries();
@@ -116,7 +119,55 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <button
+              className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground transition-colors"
+              aria-label="Plus de menus"
+            >
+              <Menu className="h-5 w-5" />
+              Plus
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-2 py-4">
+              {nav.map((n) => {
+                const active = pathname === n.to || pathname.startsWith(n.to + "/");
+                return (
+                  <Link
+                    key={n.to}
+                    to={n.to}
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-xl border p-3 text-center text-xs font-medium transition-colors",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-secondary",
+                    )}
+                  >
+                    <n.icon className="h-5 w-5" />
+                    {n.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  signOut();
+                }}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border p-3 text-center text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                <LogOut className="h-5 w-5" />
+                Déconnexion
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </nav>
+
     </div>
   );
 }
