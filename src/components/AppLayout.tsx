@@ -42,6 +42,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function signOut() {
     await qc.cancelQueries();
