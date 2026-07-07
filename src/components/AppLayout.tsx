@@ -119,7 +119,55 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
           );
         })}
+        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+          <SheetTrigger asChild>
+            <button
+              className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] font-medium text-muted-foreground transition-colors"
+              aria-label="Plus de menus"
+            >
+              <Menu className="h-5 w-5" />
+              Plus
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <div className="grid grid-cols-3 gap-2 py-4">
+              {nav.map((n) => {
+                const active = pathname === n.to || pathname.startsWith(n.to + "/");
+                return (
+                  <Link
+                    key={n.to}
+                    to={n.to}
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-xl border p-3 text-center text-xs font-medium transition-colors",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-secondary",
+                    )}
+                  >
+                    <n.icon className="h-5 w-5" />
+                    {n.label}
+                  </Link>
+                );
+              })}
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  signOut();
+                }}
+                className="flex flex-col items-center gap-2 rounded-xl border border-border p-3 text-center text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+              >
+                <LogOut className="h-5 w-5" />
+                Déconnexion
+              </button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </nav>
+
     </div>
   );
 }
