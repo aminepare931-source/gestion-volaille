@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import logo from "@/assets/logo-source.png";
+import logo from "@/assets/logo-mark.png";
 import {
   LayoutDashboard,
   Bird,
