@@ -124,6 +124,43 @@ function SettingsPage() {
 
 
 
+        <section className="rounded-2xl border bg-card p-5 shadow-sm">
+          <h3 className="mb-1 flex items-center gap-2 font-semibold"><CreditCard className="h-4 w-4" /> Moyens de paiement</h3>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Paiements mobiles et cartes disponibles au Burkina Faso et en Afrique de l'Ouest.
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {[
+              { name: "Orange Money", desc: "Paiement mobile", color: "#ff7900" },
+              { name: "Moov Money", desc: "Paiement mobile", color: "#004b9b" },
+              { name: "Wave", desc: "Paiement mobile", color: "#1dc3ff" },
+              { name: "Carte bancaire", desc: "Visa / Mastercard", color: "var(--color-primary)" },
+            ].map((m) => (
+              <div key={m.name} className="flex items-center gap-3 rounded-xl border p-3">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg" style={{ background: m.color + "22" }}>
+                  <Smartphone className="h-4.5 w-4.5" style={{ color: m.color }} />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{m.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{m.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <a
+            href="tel:+22655300868"
+            className="mt-3 flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/15">
+              <Phone className="h-4.5 w-4.5 text-primary" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">Assistance paiement</p>
+              <p className="text-xs text-muted-foreground">Appelez le +226 55 30 08 68</p>
+            </div>
+          </a>
+        </section>
+
         <Button variant="destructive" onClick={signOut} className="w-full">
           <LogOut className="mr-1 h-4 w-4" /> Déconnexion
         </Button>
