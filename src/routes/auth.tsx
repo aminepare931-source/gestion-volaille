@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,15 +59,16 @@ function AuthPage() {
   }
 
   async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
     });
-    if (result.error) {
+    if (error) {
       toast.error("Connexion Google impossible");
-      return;
     }
-    if (result.redirected) return;
-    navigate({ to: "/dashboard" });
+    // En cas de succès, Supabase redirige automatiquement vers le provider OAuth.
   }
 
   return (

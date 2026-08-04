@@ -1,21 +1,39 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, nitro (build-only using cloudflare as a default target),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+// Config Vite maison — remplace @lovable.dev/vite-tanstack-config.
+// Assemble nous-mêmes les plugins que le package Lovable regroupait :
+// tailwind, résolution des chemins tsconfig (@/...), TanStack Start,
+// build serveur via Nitro (preset "vercel" pour le déploiement sur Vercel),
+// React, et le plugin PWA existant.
+import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { nitro } from "nitro/vite";
+import viteReact from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
+  resolve: {
+    alias: {
+      "@": new URL("./src", import.meta.url).pathname,
+    },
+    dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
   },
-  vite: {
-    plugins: [
-      VitePWA({
+  optimizeDeps: {
+    include: ["react", "react-dom", "react-dom/client", "react/jsx-runtime", "react/jsx-dev-runtime"],
+  },
+  server: {
+    host: true,
+    port: 8080,
+  },
+  plugins: [
+    tailwindcss(),
+    tsConfigPaths({ projects: ["./tsconfig.json"] }),
+    // Redirige l'entrée serveur bundlée de TanStack Start vers src/server.ts (notre wrapper d'erreurs SSR).
+    tanstackStart({ server: { entry: "server" } }),
+    // Build-only : Nitro génère le serveur adapté à la plateforme cible. Preset "vercel" pour le déploiement Vercel.
+    nitro({ preset: "vercel" }),
+    viteReact(),
+    VitePWA({
         registerType: "autoUpdate",
         injectRegister: null,
         devOptions: { enabled: false },
@@ -78,7 +96,6 @@ export default defineConfig({
             },
           ],
         },
-      }),
-    ],
-  },
+    }),
+  ],
 });

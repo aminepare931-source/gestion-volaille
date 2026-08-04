@@ -1,4 +1,4 @@
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createGroqProvider } from "@/lib/ai-gateway.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
 
@@ -13,8 +13,8 @@ export const Route = createFileRoute("/api/chat")({
           return new Response("Messages are required", { status: 400 });
         }
 
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        const key = process.env.GROQ_API_KEY;
+        if (!key) return new Response("Missing GROQ_API_KEY", { status: 500 });
 
         const ctx = typeof context === "string" ? context : "";
 
@@ -34,9 +34,9 @@ Utilise le markdown pour structurer (gras, listes). Ne donne jamais de dosage m�
 DONNÉES ACTUELLES DE L'ÉLEVAGE :
 ${ctx || "Aucune donnée transmise."}`;
 
-        const gateway = createLovableAiGatewayProvider(key);
+        const groq = createGroqProvider(key);
         const result = streamText({
-          model: gateway("google/gemini-3-flash-preview"),
+          model: groq("llama-3.3-70b-versatile"),
           system,
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
