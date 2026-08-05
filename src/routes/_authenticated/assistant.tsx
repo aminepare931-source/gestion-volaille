@@ -29,6 +29,7 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 
 const SUGGESTIONS = [
   "Fais le point sur les alertes en cours",
+  "Crée un lot de 200 poussins Cobb 500 arrivés aujourd'hui",
   "Quel est mon lot le plus rentable ?",
   "Comment réduire la mortalité ?",
   "Que dois-je faire vu la météo aujourd'hui ?",
@@ -129,7 +130,7 @@ Météo : ${
 
   return (
     <>
-      <PageHeader title="Assistant IA" subtitle="Coach Volaille — conseils, alertes et prévention" />
+      <PageHeader title="Assistant IA" subtitle="Coach Élevage — conseils, alertes et actions directes" />
       <div className="flex h-[calc(100vh-9rem)] flex-col md:h-[calc(100vh-8.5rem)]">
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 md:p-8">
           {messages.length === 0 && (
@@ -137,9 +138,11 @@ Météo : ${
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
                 <Bot className="h-7 w-7" />
               </div>
-              <h3 className="text-lg font-semibold">Bonjour, je suis votre Coach Volaille</h3>
+              <h3 className="text-lg font-semibold">Bonjour, je suis votre Coach Élevage</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Je connais vos lots, vos finances, votre stock et la météo. Posez-moi une question.
+                Je connais vos lots, vos finances, votre stock et la météo — et je peux agir directement :
+                créer un lot, enregistrer un soin ou une vente, ajuster le stock. Posez-moi une question ou
+                donnez-moi une instruction.
               </p>
               <div className="mt-5 grid gap-2">
                 {SUGGESTIONS.map((s) => (
