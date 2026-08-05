@@ -15,7 +15,7 @@ import {
   Bot,
   Menu,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { neon } from "@/integrations/neon/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { CommandSearch } from "@/components/CommandSearch";
@@ -47,7 +47,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    await neon.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 

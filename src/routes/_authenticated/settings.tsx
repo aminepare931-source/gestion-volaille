@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { neon } from "@/integrations/neon/client";
 import { useProfile, useFarm, useUpdate } from "@/lib/data";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -54,7 +54,7 @@ function SettingsPage() {
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
-    await supabase.auth.signOut();
+    await neon.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
 

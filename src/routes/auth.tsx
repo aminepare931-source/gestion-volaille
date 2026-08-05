@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { neon } from "@/integrations/neon/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import logo from "@/assets/logo-mark.png";
 
 export const Route = createFileRoute("/auth")({
   beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await neon.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
   },
   head: () => ({
@@ -37,10 +37,10 @@ function AuthPage() {
     setLoading(true);
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await neon.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await neon.auth.signUp({
           email,
           password,
           options: {
@@ -49,6 +49,14 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+
+        // Contrairement à Supabase, Neon n'a pas de trigger côté base pour créer
+        // automatiquement le profil + la ferme par défaut à l'inscription : on le fait ici.
+        const userId = data.user?.id;
+        if (userId) {
+          await neon.from("profiles").insert({ id: userId, full_name: fullName });
+          await neon.from("farms").insert({ user_id: userId, name: farmName || "Ma Ferme" });
+        }
       }
       navigate({ to: "/dashboard" });
     } catch (err) {
@@ -59,7 +67,7 @@ function AuthPage() {
   }
 
   async function google() {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await neon.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/dashboard`,

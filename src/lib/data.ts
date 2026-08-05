@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { neon } from "@/integrations/neon/client";
 
 // Loosely-typed accessor for dynamic table names.
-const db = supabase as unknown as { from: (t: string) => any };
-import type { Tables } from "@/integrations/supabase/types";
+const db = neon as unknown as { from: (t: string) => any };
+import type { Tables } from "@/integrations/neon/types";
 
 export type Farm = Tables<"farms">;
 export type Building = Tables<"buildings">;
@@ -73,7 +73,7 @@ export function useLot(id: string) {
 }
 
 async function currentUserId() {
-  const { data } = await supabase.auth.getUser();
+  const { data } = await neon.auth.getUser();
   if (!data.user) throw new Error("Non authentifié");
   return data.user.id;
 }
