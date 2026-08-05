@@ -3,7 +3,7 @@
 // de la base garantit qu'il ne peut jamais lire/écrire les données d'un autre éleveur.
 import { tool } from "ai";
 import { z } from "zod";
-import { insertRows, selectRows } from "@/lib/neon-data-api.server";
+import { insertRows, selectRows, updateRows } from "@/lib/neon-data-api.server";
 
 // Repères zootechniques indicatifs (démarrage/premiers jours), par grande famille
 // d'espèce. Volontairement approximatifs : servent de point de départ pour l'IA,
@@ -170,6 +170,125 @@ export function buildAiTools(userId: string, token: string) {
           record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
         });
         return row;
+      },
+    }),
+
+    record_mortality: tool({
+      description: "Enregistre des morts sur un lot (mortalité). Utile pour que le tableau de bord et les taux de mortalité restent à jour.",
+      inputSchema: z.object({
+        lot_id: z.string().uuid(),
+        count: z.number().int().positive(),
+        cause: z.string().optional(),
+        record_date: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "mortality_records", {
+          user_id: userId,
+          lot_id: input.lot_id,
+          count: input.count,
+          cause: input.cause ?? null,
+          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+        });
+        return row;
+      },
+    }),
+
+    record_weight: tool({
+      description: "Enregistre un relevé de poids moyen pour un lot (suivi de croissance).",
+      inputSchema: z.object({
+        lot_id: z.string().uuid(),
+        avg_weight: z.number().positive().describe("Poids moyen en kg"),
+        record_date: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "weight_records", {
+          user_id: userId,
+          lot_id: input.lot_id,
+          avg_weight: input.avg_weight,
+          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+        });
+        return row;
+      },
+    }),
+
+    record_sale: tool({
+      description: "Enregistre une vente (animaux vivants, œufs, etc.) liée ou non à un lot.",
+      inputSchema: z.object({
+        lot_id: z.string().uuid().nullable().optional(),
+        quantity: z.number().int().positive(),
+        unit_price: z.number().nonnegative(),
+        client: z.string().optional(),
+        record_date: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "sales", {
+          user_id: userId,
+          lot_id: input.lot_id ?? null,
+          quantity: input.quantity,
+          unit_price: input.unit_price,
+          total: input.quantity * input.unit_price,
+          client: input.client ?? null,
+          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+        });
+        return row;
+      },
+    }),
+
+    record_transaction: tool({
+      description: "Enregistre une dépense ou un revenu hors vente (achat de matériel, transport, salaire, subvention...).",
+      inputSchema: z.object({
+        type: z.enum(["expense", "income"]),
+        category: z.string().describe("Ex: 'aliment', 'santé', 'transport', 'matériel', 'salaire'"),
+        amount: z.number().positive(),
+        description: z.string().optional(),
+        lot_id: z.string().uuid().nullable().optional(),
+        record_date: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "transactions", {
+          user_id: userId,
+          type: input.type,
+          category: input.category,
+          amount: input.amount,
+          description: input.description ?? null,
+          lot_id: input.lot_id ?? null,
+          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+        });
+        return row;
+      },
+    }),
+
+    adjust_stock: tool({
+      description:
+        "Ajuste la quantité d'un article de stock existant (ex: après une distribution d'aliment, ou une nouvelle livraison). delta positif = ajoute, négatif = retire. Prévient si ça passe sous le seuil d'alerte.",
+      inputSchema: z.object({
+        stock_item_id: z.string().uuid(),
+        delta: z.number().describe("Quantité à ajouter (positif) ou retirer (négatif)"),
+      }),
+      execute: async ({ stock_item_id, delta }) => {
+        const [item] = await selectRows<{ id: string; quantity: number; alert_threshold: number; unit: string; name: string }>(
+          token,
+          "stock_items",
+          `select=id,quantity,alert_threshold,unit,name&id=eq.${stock_item_id}`,
+        );
+        if (!item) throw new Error("Article de stock introuvable.");
+        const newQuantity = Math.max(0, Number(item.quantity) + delta);
+        const [row] = await updateRows(token, "stock_items", `id=eq.${stock_item_id}`, { quantity: newQuantity });
+        return {
+          ...row,
+          alerte_stock_bas: newQuantity <= Number(item.alert_threshold) && Number(item.alert_threshold) > 0,
+        };
+      },
+    }),
+
+    list_lots: tool({
+      description: "Liste les lots de l'éleveur avec leurs infos essentielles (espèce, effectif initial, statut, bâtiment).",
+      inputSchema: z.object({
+        status: z.enum(["active", "sold", "all"]).default("active"),
+      }),
+      execute: async ({ status }) => {
+        const query = status === "all" ? "select=*&order=created_at.desc" : `select=*&status=eq.${status}&order=created_at.desc`;
+        return selectRows(token, "lots", query);
       },
     }),
   };
