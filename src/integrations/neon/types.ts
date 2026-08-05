@@ -11,26 +11,32 @@ export type Database = {
     Tables: {
       buildings: {
         Row: {
+          building_type: string | null
           capacity: number
           created_at: string
           id: string
           name: string
+          species: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          building_type?: string | null
           capacity?: number
           created_at?: string
           id?: string
           name: string
+          species?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          building_type?: string | null
           capacity?: number
           created_at?: string
           id?: string
           name?: string
+          species?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -159,6 +165,7 @@ export type Database = {
           initial_count: number
           name: string
           purchase_cost: number
+          species: string
           status: string
           updated_at: string
           user_id: string
@@ -173,6 +180,7 @@ export type Database = {
           initial_count?: number
           name: string
           purchase_cost?: number
+          species?: string
           status?: string
           updated_at?: string
           user_id: string
@@ -187,6 +195,7 @@ export type Database = {
           initial_count?: number
           name?: string
           purchase_cost?: number
+          species?: string
           status?: string
           updated_at?: string
           user_id?: string

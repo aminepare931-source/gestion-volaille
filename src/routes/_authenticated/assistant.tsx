@@ -5,6 +5,7 @@ import { DefaultChatTransport } from "ai";
 import ReactMarkdown from "react-markdown";
 import { Bot, Send, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
+import { neon } from "@/integrations/neon/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -86,8 +87,22 @@ Météo : ${
     }`;
   }, [lots, mortality, sales, stock, transactions, feed, farm, cur, weather]);
 
+  const tokenRef = useRef<string | null>(null);
+  useEffect(() => {
+    neon.auth.getSession().then(({ data }) => {
+      tokenRef.current = data.session?.access_token ?? null;
+    });
+    const { data: sub } = neon.auth.onAuthStateChange((_event, session) => {
+      tokenRef.current = session?.access_token ?? null;
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const { messages, sendMessage, status } = useChat({
-    transport: new DefaultChatTransport({ api: "/api/chat" }),
+    transport: new DefaultChatTransport({
+      api: "/api/chat",
+      headers: (): Record<string, string> => (tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {}),
+    }),
   });
 
   const [input, setInput] = useState("");
