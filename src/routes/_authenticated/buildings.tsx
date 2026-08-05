@@ -20,7 +20,20 @@ function BuildingsPage() {
 
   const fields: FieldDef[] = [
     { name: "name", label: "Nom du bâtiment", required: true, placeholder: "Poulailler A" },
-    { name: "capacity", label: "Capacité (volailles)", type: "number", required: true },
+    {
+      name: "species",
+      label: "Espèce (optionnel)",
+      type: "select",
+      options: [
+        { value: "volaille", label: "Volaille" },
+        { value: "bovin", label: "Bovin" },
+        { value: "ovin", label: "Ovin" },
+        { value: "caprin", label: "Caprin" },
+        { value: "porcin", label: "Porcin" },
+      ],
+    },
+    { name: "building_type", label: "Type (optionnel)", placeholder: "Poulailler, étable, bergerie..." },
+    { name: "capacity", label: "Capacité", type: "number", required: true },
   ];
 
   return (

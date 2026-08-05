@@ -29,17 +29,32 @@ function LotsPage() {
   const insert = useInsert("lots");
   const [filter, setFilter] = useState<"all" | "active" | "finished">("all");
 
+  const SPECIES_OPTIONS = [
+    { value: "volaille", label: "Volaille" },
+    { value: "bovin", label: "Bovin" },
+    { value: "ovin", label: "Ovin" },
+    { value: "caprin", label: "Caprin" },
+    { value: "porcin", label: "Porcin" },
+  ];
+
   const fields: FieldDef[] = [
     { name: "name", label: "Nom du lot", required: true, placeholder: "Lot #1" },
+    {
+      name: "species",
+      label: "Espèce",
+      type: "select",
+      defaultValue: "volaille",
+      options: SPECIES_OPTIONS,
+    },
     { name: "breed", label: "Race", placeholder: "Cobb 500" },
     { name: "arrival_date", label: "Date d'arrivée", type: "date", defaultValue: new Date().toISOString().slice(0, 10) },
-    { name: "initial_count", label: "Nombre de poussins", type: "number", required: true },
+    { name: "initial_count", label: "Effectif initial", type: "number", required: true },
     { name: "purchase_cost", label: "Coût d'achat total", type: "number" },
     {
       name: "building_id",
       label: "Bâtiment",
       type: "select",
-      options: buildings.map((b) => ({ value: b.id, label: b.name })),
+      options: buildings.map((b) => ({ value: b.id, label: b.species ? `${b.name} (${b.species})` : b.name })),
     },
   ];
 
