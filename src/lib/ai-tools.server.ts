@@ -4,6 +4,8 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { insertRows, selectRows, updateRows } from "@/lib/neon-data-api.server";
+import { upcomingVaccines } from "@/lib/insights";
+import type { Lot, MortalityRecord } from "@/lib/data";
 
 // Repères zootechniques indicatifs (démarrage/premiers jours), par grande famille
 // d'espèce. Volontairement approximatifs : servent de point de départ pour l'IA,
@@ -289,6 +291,46 @@ export function buildAiTools(userId: string, token: string) {
       execute: async ({ status }) => {
         const query = status === "all" ? "select=*&order=created_at.desc" : `select=*&status=eq.${status}&order=created_at.desc`;
         return selectRows(token, "lots", query);
+      },
+    }),
+    get_alerts: tool({
+      description:
+        "Renvoie les alertes actives de l'élevage (stock bas, mortalité élevée sur un lot, vaccins à faire bientôt, lots qui approchent de l'âge de vente). Les mêmes alertes que voit l'éleveur dans l'app. À consulter en début de conversation ou quand l'utilisateur demande un état des lieux.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const [stock, lots, mortality] = await Promise.all([
+          selectRows<{ id: string; name: string; quantity: number; alert_threshold: number; unit: string }>(
+            token,
+            "stock_items",
+            "select=id,name,quantity,alert_threshold,unit",
+          ),
+          selectRows<Lot>(token, "lots", "select=*&status=eq.active"),
+          selectRows<MortalityRecord>(token, "mortality_records", "select=*"),
+        ]);
+
+        const alerts: { type: string; priority: "high" | "medium" | "low"; message: string }[] = [];
+
+        stock.forEach((s) => {
+          if (Number(s.alert_threshold) > 0 && Number(s.quantity) <= Number(s.alert_threshold)) {
+            alerts.push({ type: "stock", priority: "medium", message: `Stock faible : ${s.name} (${s.quantity} ${s.unit})` });
+          }
+        });
+
+        lots.forEach((l) => {
+          const deaths = mortality.filter((m) => m.lot_id === l.id).reduce((s, m) => s + Number(m.count), 0);
+          const rate = l.initial_count > 0 ? (deaths / l.initial_count) * 100 : 0;
+          if (rate > 10) alerts.push({ type: "mortalite", priority: "high", message: `Mortalité élevée sur ${l.name} (${rate.toFixed(1)}%)` });
+        });
+
+        upcomingVaccines(lots).forEach((v) => {
+          alerts.push({
+            type: "vaccination",
+            priority: v.dueInDays <= 0 ? "high" : "medium",
+            message: `${v.lotName} : ${v.step.name} (J${v.step.day}) — ${v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}`,
+          });
+        });
+
+        return { nombre_alertes: alerts.length, alertes: alerts };
       },
     }),
   };

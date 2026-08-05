@@ -28,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/assistant")({
 });
 
 const SUGGESTIONS = [
+  "Fais le point sur les alertes en cours",
   "Quel est mon lot le plus rentable ?",
   "Comment réduire la mortalité ?",
   "Que dois-je faire vu la météo aujourd'hui ?",
