@@ -12,6 +12,7 @@ import {
   Bell,
   ListChecks,
   Users,
+  Stethoscope,
   Settings,
   LogOut,
   Bot,
@@ -36,6 +37,7 @@ const nav = [
   { to: "/notifications", label: "Alertes", icon: Bell },
   { to: "/tasks", label: "Tâches", icon: ListChecks },
   { to: "/clients", label: "Clients", icon: Users },
+  { to: "/health", label: "Santé", icon: Stethoscope },
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 

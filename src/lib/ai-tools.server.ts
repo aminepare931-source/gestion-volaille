@@ -365,6 +365,33 @@ export function buildAiTools(userId: string, token: string) {
         return row;
       },
     }),
+    get_disease_info: tool({
+      description:
+        "Cherche dans l'encyclopédie des maladies par espèce et/ou symptômes observés. Utilise ceci dès que l'utilisateur décrit des symptômes inhabituels sur ses animaux, pour l'aider à identifier une piste — jamais pour poser un diagnostic certain, toujours recommander un vétérinaire pour confirmer.",
+      inputSchema: z.object({
+        species: z.enum(["volaille", "bovin", "ovin", "caprin", "porcin"]).optional(),
+        symptom_keyword: z.string().optional().describe("Mot-clé de symptôme à rechercher, ex: 'diarrhée', 'boiterie'"),
+      }),
+      execute: async ({ species, symptom_keyword }) => {
+        const all = await selectRows<{ name: string; species: string[]; symptoms: string[]; prevention: string | null; contagious: boolean; severity: string }>(
+          token,
+          "diseases",
+          "select=name,species,symptoms,prevention,contagious,severity",
+        );
+        return all.filter(
+          (d) =>
+            (!species || d.species.includes(species)) &&
+            (!symptom_keyword || d.symptoms.some((s) => s.toLowerCase().includes(symptom_keyword.toLowerCase()))),
+        );
+      },
+    }),
+
+    list_medications: tool({
+      description: "Liste le stock de médicaments de l'éleveur (avec dates de péremption).",
+      inputSchema: z.object({}),
+      execute: async () => selectRows(token, "medications", "select=id,name,category,quantity,unit,expiry_date&order=name.asc"),
+    }),
+
     get_alerts: tool({
       description:
         "Renvoie les alertes actives de l'élevage (stock bas, mortalité élevée sur un lot, vaccins à faire bientôt, lots qui approchent de l'âge de vente). Les mêmes alertes que voit l'éleveur dans l'app. À consulter en début de conversation ou quand l'utilisateur demande un état des lieux.",

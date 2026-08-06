@@ -69,6 +69,39 @@ export type Database = {
         }
         Relationships: []
       }
+      diseases: {
+        Row: {
+          category: string
+          contagious: boolean
+          id: string
+          name: string
+          prevention: string | null
+          severity: string
+          species: string[]
+          symptoms: string[]
+        }
+        Insert: {
+          category?: string
+          contagious?: boolean
+          id?: string
+          name: string
+          prevention?: string | null
+          severity?: string
+          species: string[]
+          symptoms?: string[]
+        }
+        Update: {
+          category?: string
+          contagious?: boolean
+          id?: string
+          name?: string
+          prevention?: string | null
+          severity?: string
+          species?: string[]
+          symptoms?: string[]
+        }
+        Relationships: []
+      }
       feed_records: {
         Row: {
           cost: number
@@ -209,6 +242,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      medications: {
+        Row: {
+          category: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          name: string
+          notes: string | null
+          quantity: number
+          unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number
+          unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       mortality_records: {
         Row: {
