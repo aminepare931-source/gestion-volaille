@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   BarChart3,
   Bell,
+  ListChecks,
   Settings,
   LogOut,
   Bot,
@@ -32,6 +33,7 @@ const nav = [
   { to: "/assistant", label: "Assistant IA", icon: Bot },
   { to: "/analytics", label: "Analyses", icon: BarChart3 },
   { to: "/notifications", label: "Alertes", icon: Bell },
+  { to: "/tasks", label: "Tâches", icon: ListChecks },
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 

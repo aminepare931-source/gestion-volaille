@@ -293,6 +293,48 @@ export function buildAiTools(userId: string, token: string) {
         return selectRows(token, "lots", query);
       },
     }),
+
+    create_task: tool({
+      description:
+        "Crée une tâche/rappel pour l'éleveur (ex: 'vacciner le lot X demain'). Utilise ceci pour toute suggestion d'action que l'utilisateur devra valider lui-même plutôt qu'une action que tu exécutes directement (ex: décisions importantes, actions physiques que seul l'humain peut faire). Marque toujours created_by='ia' pour ces suggestions.",
+      inputSchema: z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+        due_date: z.string().optional().describe("Format YYYY-MM-DD"),
+        lot_id: z.string().uuid().nullable().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "tasks", {
+          user_id: userId,
+          title: input.title,
+          description: input.description ?? null,
+          priority: input.priority ?? "medium",
+          due_date: input.due_date ?? null,
+          lot_id: input.lot_id ?? null,
+          created_by: "ia",
+        });
+        return row;
+      },
+    }),
+
+    list_tasks: tool({
+      description: "Liste les tâches en cours (non terminées) de l'éleveur, triées par priorité.",
+      inputSchema: z.object({}),
+      execute: async () => selectRows(token, "tasks", "select=*&status=eq.pending&order=due_date.asc"),
+    }),
+
+    complete_task: tool({
+      description: "Marque une tâche comme terminée.",
+      inputSchema: z.object({ task_id: z.string().uuid() }),
+      execute: async ({ task_id }) => {
+        const [row] = await updateRows(token, "tasks", `id=eq.${task_id}`, {
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        });
+        return row;
+      },
+    }),
     get_alerts: tool({
       description:
         "Renvoie les alertes actives de l'élevage (stock bas, mortalité élevée sur un lot, vaccins à faire bientôt, lots qui approchent de l'âge de vente). Les mêmes alertes que voit l'éleveur dans l'app. À consulter en début de conversation ou quand l'utilisateur demande un état des lieux.",

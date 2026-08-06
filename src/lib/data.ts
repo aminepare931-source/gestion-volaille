@@ -15,6 +15,7 @@ export type WeightRecord = Tables<"weight_records">;
 export type StockItem = Tables<"stock_items">;
 export type Transaction = Tables<"transactions">;
 export type Sale = Tables<"sales">;
+export type Task = Tables<"tasks">;
 
 function useList<T>(table: string, order = "created_at", asc = false) {
   return useQuery({
@@ -59,6 +60,7 @@ export const useWeightRecords = () => useList<WeightRecord>("weight_records", "r
 export const useStockItems = () => useList<StockItem>("stock_items", "name", true);
 export const useTransactions = () => useList<Transaction>("transactions", "record_date");
 export const useSales = () => useList<Sale>("sales", "record_date");
+export const useTasks = () => useList<Task>("tasks", "due_date", true);
 
 export function useLot(id: string) {
   return useQuery({
