@@ -214,18 +214,20 @@ export function buildAiTools(userId: string, token: string) {
     }),
 
     record_sale: tool({
-      description: "Enregistre une vente (animaux vivants, œufs, etc.) liée ou non à un lot.",
+      description: "Enregistre une vente (animaux vivants, œufs, etc.) liée ou non à un lot et/ou un client.",
       inputSchema: z.object({
         lot_id: z.string().uuid().nullable().optional(),
+        client_id: z.string().uuid().nullable().optional().describe("Fiche client existante, si l'acheteur en a une (voir list_clients)"),
+        client: z.string().optional().describe("Nom libre de l'acheteur si pas de fiche client"),
         quantity: z.number().int().positive(),
         unit_price: z.number().nonnegative(),
-        client: z.string().optional(),
         record_date: z.string().optional(),
       }),
       execute: async (input) => {
         const [row] = await insertRows(token, "sales", {
           user_id: userId,
           lot_id: input.lot_id ?? null,
+          client_id: input.client_id ?? null,
           quantity: input.quantity,
           unit_price: input.unit_price,
           total: input.quantity * input.unit_price,
@@ -234,6 +236,34 @@ export function buildAiTools(userId: string, token: string) {
         });
         return row;
       },
+    }),
+
+    create_client: tool({
+      description: "Crée une fiche client (acheteur régulier). Utile avant record_sale si l'utilisateur mentionne un client qui n'existe pas encore.",
+      inputSchema: z.object({
+        name: z.string(),
+        type: z.enum(["individual", "business", "wholesale"]).default("individual"),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+        notes: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "clients", {
+          user_id: userId,
+          name: input.name,
+          type: input.type ?? "individual",
+          phone: input.phone ?? null,
+          address: input.address ?? null,
+          notes: input.notes ?? null,
+        });
+        return row;
+      },
+    }),
+
+    list_clients: tool({
+      description: "Liste les fiches clients existantes de l'éleveur.",
+      inputSchema: z.object({}),
+      execute: async () => selectRows(token, "clients", "select=id,name,type,phone&order=name.asc"),
     }),
 
     record_transaction: tool({

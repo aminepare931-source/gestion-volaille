@@ -11,6 +11,7 @@ import {
   BarChart3,
   Bell,
   ListChecks,
+  Users,
   Settings,
   LogOut,
   Bot,
@@ -34,6 +35,7 @@ const nav = [
   { to: "/analytics", label: "Analyses", icon: BarChart3 },
   { to: "/notifications", label: "Alertes", icon: Bell },
   { to: "/tasks", label: "Tâches", icon: ListChecks },
+  { to: "/clients", label: "Clients", icon: Users },
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 
