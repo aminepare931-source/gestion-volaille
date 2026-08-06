@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { z } from "zod";
 import { neon } from "@/integrations/neon/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,9 @@ import registerBg from "@/assets/register-bg.jpg";
 import logo from "@/assets/logo-mark.png";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: z.object({
+    mode: z.enum(["login", "register"]).optional(),
+  }),
   beforeLoad: async () => {
     const { data } = await neon.auth.getSession();
     if (data.session) throw redirect({ to: "/dashboard" });
@@ -25,7 +29,8 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const { mode: initialMode } = Route.useSearch();
+  const [mode, setMode] = useState<"login" | "register">(initialMode ?? "login");
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [farmName, setFarmName] = useState("");
