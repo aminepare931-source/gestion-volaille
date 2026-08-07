@@ -17,6 +17,7 @@ import { Route as AuthenticatedAssistantRouteImport } from './routes/_authentica
 import { Route as AuthenticatedBuildingsRouteImport } from './routes/_authenticated/buildings'
 import { Route as AuthenticatedClientsRouteImport } from './routes/_authenticated/clients'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEquipmentRouteImport } from './routes/_authenticated/equipment'
 import { Route as AuthenticatedFinanceRouteImport } from './routes/_authenticated/finance'
 import { Route as AuthenticatedHealthRouteImport } from './routes/_authenticated/health'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -65,6 +66,11 @@ const AuthenticatedClientsRoute = AuthenticatedClientsRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEquipmentRoute = AuthenticatedEquipmentRouteImport.update({
+  id: '/equipment',
+  path: '/equipment',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFinanceRoute = AuthenticatedFinanceRouteImport.update({
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/buildings': typeof AuthenticatedBuildingsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/equipment': typeof AuthenticatedEquipmentRoute
   '/finance': typeof AuthenticatedFinanceRoute
   '/health': typeof AuthenticatedHealthRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByTo {
   '/buildings': typeof AuthenticatedBuildingsRoute
   '/clients': typeof AuthenticatedClientsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/equipment': typeof AuthenticatedEquipmentRoute
   '/finance': typeof AuthenticatedFinanceRoute
   '/health': typeof AuthenticatedHealthRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -167,6 +175,7 @@ export interface FileRoutesById {
   '/_authenticated/buildings': typeof AuthenticatedBuildingsRoute
   '/_authenticated/clients': typeof AuthenticatedClientsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/equipment': typeof AuthenticatedEquipmentRoute
   '/_authenticated/finance': typeof AuthenticatedFinanceRoute
   '/_authenticated/health': typeof AuthenticatedHealthRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/buildings'
     | '/clients'
     | '/dashboard'
+    | '/equipment'
     | '/finance'
     | '/health'
     | '/notifications'
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/buildings'
     | '/clients'
     | '/dashboard'
+    | '/equipment'
     | '/finance'
     | '/health'
     | '/notifications'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/_authenticated/buildings'
     | '/_authenticated/clients'
     | '/_authenticated/dashboard'
+    | '/_authenticated/equipment'
     | '/_authenticated/finance'
     | '/_authenticated/health'
     | '/_authenticated/notifications'
@@ -302,6 +314,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/equipment': {
+      id: '/_authenticated/equipment'
+      path: '/equipment'
+      fullPath: '/equipment'
+      preLoaderRoute: typeof AuthenticatedEquipmentRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/finance': {
@@ -383,6 +402,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBuildingsRoute: typeof AuthenticatedBuildingsRoute
   AuthenticatedClientsRoute: typeof AuthenticatedClientsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEquipmentRoute: typeof AuthenticatedEquipmentRoute
   AuthenticatedFinanceRoute: typeof AuthenticatedFinanceRoute
   AuthenticatedHealthRoute: typeof AuthenticatedHealthRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -400,6 +420,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBuildingsRoute: AuthenticatedBuildingsRoute,
   AuthenticatedClientsRoute: AuthenticatedClientsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEquipmentRoute: AuthenticatedEquipmentRoute,
   AuthenticatedFinanceRoute: AuthenticatedFinanceRoute,
   AuthenticatedHealthRoute: AuthenticatedHealthRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,

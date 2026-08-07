@@ -13,6 +13,7 @@ import {
   ListChecks,
   Users,
   Stethoscope,
+  Wrench,
   Settings,
   LogOut,
   Bot,
@@ -38,6 +39,7 @@ const nav = [
   { to: "/tasks", label: "Tâches", icon: ListChecks },
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/health", label: "Santé", icon: Stethoscope },
+  { to: "/equipment", label: "Équipements", icon: Wrench },
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 

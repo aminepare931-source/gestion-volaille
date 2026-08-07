@@ -102,6 +102,87 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment: {
+        Row: {
+          brand: string | null
+          building_id: string | null
+          category: string
+          created_at: string
+          id: string
+          model: string | null
+          name: string
+          notes: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string | null
+          building_id?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          name: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string | null
+          building_id?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          name?: string
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      maintenance_records: {
+        Row: {
+          cost: number
+          created_at: string
+          description: string | null
+          equipment_id: string
+          id: string
+          record_date: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          equipment_id: string
+          id?: string
+          record_date?: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          description?: string | null
+          equipment_id?: string
+          id?: string
+          record_date?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       feed_records: {
         Row: {
           cost: number

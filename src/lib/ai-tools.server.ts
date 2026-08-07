@@ -433,6 +433,38 @@ export function buildAiTools(userId: string, token: string) {
       },
     }),
 
+    list_equipment: tool({
+      description: "Liste les équipements de l'éleveur avec leur statut (opérationnel, en panne, en maintenance).",
+      inputSchema: z.object({}),
+      execute: async () => selectRows(token, "equipment", "select=id,name,category,status,building_id&order=name.asc"),
+    }),
+
+    record_maintenance: tool({
+      description: "Enregistre une réparation/maintenance sur un équipement, et peut mettre à jour son statut.",
+      inputSchema: z.object({
+        equipment_id: z.string().uuid(),
+        type: z.enum(["repair", "routine", "inspection"]).default("repair"),
+        description: z.string().optional(),
+        cost: z.number().nonnegative().default(0),
+        new_status: z.enum(["operational", "maintenance", "broken", "retired"]).optional(),
+        record_date: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "maintenance_records", {
+          user_id: userId,
+          equipment_id: input.equipment_id,
+          type: input.type ?? "repair",
+          description: input.description ?? null,
+          cost: input.cost ?? 0,
+          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+        });
+        if (input.new_status) {
+          await updateRows(token, "equipment", `id=eq.${input.equipment_id}`, { status: input.new_status });
+        }
+        return row;
+      },
+    }),
+
     create_building: tool({
       description: "Crée un nouveau bâtiment (poulailler, étable, bergerie, porcherie...).",
       inputSchema: z.object({
@@ -505,7 +537,7 @@ export function buildAiTools(userId: string, token: string) {
       description:
         "Modifie un enregistrement existant sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions). Donne uniquement les champs à changer. Toujours confirmer avec l'utilisateur ce qui va être modifié avant d'appeler cet outil, sauf instruction explicite et sans ambiguïté.",
       inputSchema: z.object({
-        table: z.enum(["lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales", "transactions", "health_records", "feed_records"]),
+        table: z.enum(["lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales", "transactions", "health_records", "feed_records", "equipment"]),
         id: z.string().uuid(),
         values: z.record(z.string(), z.unknown()).describe("Champs à modifier, ex: { \"status\": \"sold\" }"),
       }),
@@ -517,11 +549,12 @@ export function buildAiTools(userId: string, token: string) {
 
     delete_record: tool({
       description:
-        "Supprime définitivement un enregistrement sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions, health_records, feed_records, mortality_records, weight_records). Action irréversible : confirme toujours avec l'utilisateur avant de l'appeler, sauf instruction explicite et sans ambiguïté (ex: 'supprime la tâche X').",
+        "Supprime définitivement un enregistrement sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions, health_records, feed_records, mortality_records, weight_records, equipment, maintenance_records). Action irréversible : confirme toujours avec l'utilisateur avant de l'appeler, sauf instruction explicite et sans ambiguïté (ex: 'supprime la tâche X').",
       inputSchema: z.object({
         table: z.enum([
           "lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales",
           "transactions", "health_records", "feed_records", "mortality_records", "weight_records",
+          "equipment", "maintenance_records",
         ]),
         id: z.string().uuid(),
       }),
