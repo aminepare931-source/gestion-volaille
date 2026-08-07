@@ -42,3 +42,8 @@ export function insertRows<T = any>(token: string, table: string, values: Record
 export function updateRows<T = any>(token: string, table: string, query: string, values: Record<string, unknown>): Promise<T[]> {
   return request(token, "PATCH", `/${table}?${query}`, values);
 }
+
+/** DELETE — ex: deleteRows(token, "tasks", "id=eq.<uuid>") */
+export function deleteRows(token: string, table: string, query: string): Promise<null> {
+  return request(token, "DELETE", `/${table}?${query}`);
+}

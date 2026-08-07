@@ -3,7 +3,7 @@
 // de la base garantit qu'il ne peut jamais lire/écrire les données d'un autre éleveur.
 import { tool } from "ai";
 import { z } from "zod";
-import { insertRows, selectRows, updateRows } from "@/lib/neon-data-api.server";
+import { insertRows, selectRows, updateRows, deleteRows } from "@/lib/neon-data-api.server";
 import { upcomingVaccines } from "@/lib/insights";
 import type { Lot, MortalityRecord } from "@/lib/data";
 
@@ -430,6 +430,104 @@ export function buildAiTools(userId: string, token: string) {
         });
 
         return { nombre_alertes: alerts.length, alertes: alerts };
+      },
+    }),
+
+    create_building: tool({
+      description: "Crée un nouveau bâtiment (poulailler, étable, bergerie, porcherie...).",
+      inputSchema: z.object({
+        name: z.string(),
+        capacity: z.number().int().nonnegative().default(0),
+        species: z.enum(["volaille", "bovin", "ovin", "caprin", "porcin"]).nullable().optional().describe("Espèce prévue, ou null si polyvalent"),
+        building_type: z.string().optional().describe("Ex: poulailler, étable, bergerie, porcherie"),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "buildings", {
+          user_id: userId,
+          name: input.name,
+          capacity: input.capacity ?? 0,
+          species: input.species ?? null,
+          building_type: input.building_type ?? null,
+        });
+        return row;
+      },
+    }),
+
+    create_stock_item: tool({
+      description: "Crée un nouvel article de stock (aliment, vaccin, matériel...). Pour ajuster une quantité existante, utilise adjust_stock.",
+      inputSchema: z.object({
+        name: z.string(),
+        category: z.enum(["feed", "medicine", "equipment", "other"]).default("feed"),
+        quantity: z.number().nonnegative().default(0),
+        unit: z.string().default("kg"),
+        alert_threshold: z.number().nonnegative().default(0),
+        unit_cost: z.number().nonnegative().default(0),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "stock_items", {
+          user_id: userId,
+          name: input.name,
+          category: input.category ?? "feed",
+          quantity: input.quantity ?? 0,
+          unit: input.unit ?? "kg",
+          alert_threshold: input.alert_threshold ?? 0,
+          unit_cost: input.unit_cost ?? 0,
+        });
+        return row;
+      },
+    }),
+
+    create_medication: tool({
+      description: "Ajoute un médicament au stock (antibiotique, antiparasitaire, vitamine, vaccin...).",
+      inputSchema: z.object({
+        name: z.string(),
+        category: z.enum(["antibiotic", "antiparasitic", "vitamin", "vaccine", "other"]).default("other"),
+        quantity: z.number().nonnegative().default(0),
+        unit: z.string().default("unité"),
+        expiry_date: z.string().optional().describe("Format YYYY-MM-DD"),
+        notes: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "medications", {
+          user_id: userId,
+          name: input.name,
+          category: input.category ?? "other",
+          quantity: input.quantity ?? 0,
+          unit: input.unit ?? "unité",
+          expiry_date: input.expiry_date ?? null,
+          notes: input.notes ?? null,
+        });
+        return row;
+      },
+    }),
+
+    update_record: tool({
+      description:
+        "Modifie un enregistrement existant sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions). Donne uniquement les champs à changer. Toujours confirmer avec l'utilisateur ce qui va être modifié avant d'appeler cet outil, sauf instruction explicite et sans ambiguïté.",
+      inputSchema: z.object({
+        table: z.enum(["lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales", "transactions", "health_records", "feed_records"]),
+        id: z.string().uuid(),
+        values: z.record(z.string(), z.unknown()).describe("Champs à modifier, ex: { \"status\": \"sold\" }"),
+      }),
+      execute: async ({ table, id, values }) => {
+        const [row] = await updateRows(token, table, `id=eq.${id}`, values);
+        return row;
+      },
+    }),
+
+    delete_record: tool({
+      description:
+        "Supprime définitivement un enregistrement sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions, health_records, feed_records, mortality_records, weight_records). Action irréversible : confirme toujours avec l'utilisateur avant de l'appeler, sauf instruction explicite et sans ambiguïté (ex: 'supprime la tâche X').",
+      inputSchema: z.object({
+        table: z.enum([
+          "lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales",
+          "transactions", "health_records", "feed_records", "mortality_records", "weight_records",
+        ]),
+        id: z.string().uuid(),
+      }),
+      execute: async ({ table, id }) => {
+        await deleteRows(token, table, `id=eq.${id}`);
+        return { deleted: true, table, id };
       },
     }),
   };
