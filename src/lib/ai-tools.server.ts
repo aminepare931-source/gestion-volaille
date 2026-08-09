@@ -3,7 +3,7 @@
 // de la base garantit qu'il ne peut jamais lire/écrire les données d'un autre éleveur.
 import { tool } from "ai";
 import { z } from "zod";
-import { insertRows, selectRows, updateRows, deleteRows } from "@/lib/neon-data-api.server";
+import { insertRows, selectRows, selectRowsSafe, updateRows, deleteRows } from "@/lib/neon-data-api.server";
 import { upcomingVaccines } from "@/lib/insights";
 import type { Lot, MortalityRecord } from "@/lib/data";
 
@@ -477,18 +477,18 @@ export function buildAiTools(userId: string, token: string) {
           ),
           selectRows<Lot>(token, "lots", "select=*&status=eq.active"),
           selectRows<MortalityRecord>(token, "mortality_records", "select=*"),
-          selectRows<{ id: string; name: string; status: string }>(token, "equipment", "select=id,name,status"),
-          selectRows<{ id: string; name: string; quantity: number; expiry_date: string | null }>(
+          selectRowsSafe<{ id: string; name: string; status: string }>(token, "equipment", "select=id,name,status"),
+          selectRowsSafe<{ id: string; name: string; quantity: number; expiry_date: string | null }>(
             token,
             "medications",
             "select=id,name,quantity,expiry_date",
           ),
-          selectRows<{ id: string; title: string; due_date: string | null; priority: string }>(
+          selectRowsSafe<{ id: string; title: string; due_date: string | null; priority: string }>(
             token,
             "tasks",
             "select=id,title,due_date,priority&status=eq.pending",
           ),
-          selectRows<{ id: string; name: string; phone: string | null }>(token, "suppliers", "select=id,name,phone"),
+          selectRowsSafe<{ id: string; name: string; phone: string | null }>(token, "suppliers", "select=id,name,phone"),
         ]);
 
         const alerts: { type: string; priority: "high" | "medium" | "low"; message: string }[] = [];

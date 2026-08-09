@@ -83,17 +83,30 @@ DONNÉES ACTUELLES DE L'ÉLEVAGE :
 ${ctx || "Aucune donnée transmise."}`;
 
         const groq = createGroqProvider(key);
-        const result = streamText({
-          model: groq("llama-3.3-70b-versatile"),
-          system,
-          messages: await convertToModelMessages(messages as UIMessage[]),
-          tools: buildAiTools(userId, token),
-          stopWhen: stepCountIs(10),
-        });
+        try {
+          const result = streamText({
+            model: groq("llama-3.3-70b-versatile"),
+            system,
+            messages: await convertToModelMessages(messages as UIMessage[]),
+            tools: buildAiTools(userId, token),
+            stopWhen: stepCountIs(10),
+            onError: ({ error }) => {
+              console.error("[chat] streamText error:", error);
+            },
+          });
 
-        return result.toUIMessageStreamResponse({
-          originalMessages: messages as UIMessage[],
-        });
+          return result.toUIMessageStreamResponse({
+            originalMessages: messages as UIMessage[],
+            onError: (error) => {
+              console.error("[chat] stream response error:", error);
+              return error instanceof Error ? `Erreur : ${error.message}` : "Une erreur est survenue côté serveur.";
+            },
+          });
+        } catch (err) {
+          console.error("[chat] fatal error before streaming:", err);
+          const message = err instanceof Error ? err.message : "Erreur inconnue";
+          return new Response(`Erreur serveur : ${message}`, { status: 500 });
+        }
       },
     },
   },

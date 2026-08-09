@@ -33,6 +33,19 @@ export function selectRows<T = any>(token: string, table: string, query = "selec
   return request(token, "GET", `/${table}?${query}`);
 }
 
+/** Comme selectRows, mais ne lance jamais d'erreur : retourne [] si la table n'existe pas
+ * encore (migration pas exécutée) ou toute autre erreur réseau/serveur. À utiliser pour les
+ * tables "optionnelles" récentes dans des outils qui agrègent plusieurs sources (ex: get_alerts),
+ * pour qu'une seule table manquante ne fasse jamais planter tout l'appel. */
+export async function selectRowsSafe<T = any>(token: string, table: string, query = "select=*"): Promise<T[]> {
+  try {
+    return await selectRows<T>(token, table, query);
+  } catch (err) {
+    console.error(`[Neon Data API] selectRowsSafe(${table}) a échoué, retour []:`, err);
+    return [];
+  }
+}
+
 /** INSERT — retourne la/les ligne(s) créée(s) */
 export function insertRows<T = any>(token: string, table: string, values: Record<string, unknown> | Record<string, unknown>[]): Promise<T[]> {
   return request(token, "POST", `/${table}`, values);
