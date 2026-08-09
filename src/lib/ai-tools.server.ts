@@ -130,13 +130,15 @@ export function buildAiTools(userId: string, token: string) {
     }),
 
     create_feed_record: tool({
-      description: "Enregistre une distribution d'aliment pour un lot (ex: la ration de démarrage du jour).",
+      description:
+        "Enregistre une distribution d'aliment pour un lot. Si stock_item_id est fourni (voir list_stock), la quantité est automatiquement décomptée du stock — pas besoin d'appeler adjust_stock en plus.",
       inputSchema: z.object({
         lot_id: z.string().uuid(),
         feed_type: z.string(),
         quantity_kg: z.number().nonnegative(),
         cost: z.number().nonnegative().default(0),
         record_date: z.string().optional(),
+        stock_item_id: z.string().uuid().nullable().optional().describe("Article de stock d'aliment correspondant, si applicable (voir list_stock)"),
       }),
       execute: async (input) => {
         const [row] = await insertRows(token, "feed_records", {
@@ -146,8 +148,26 @@ export function buildAiTools(userId: string, token: string) {
           quantity_kg: input.quantity_kg,
           cost: input.cost ?? 0,
           record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+          stock_item_id: input.stock_item_id ?? null,
         });
-        return row;
+
+        let stockWarning: string | null = null;
+        if (input.stock_item_id) {
+          const [item] = await selectRows<{ id: string; quantity: number; alert_threshold: number; name: string; unit: string }>(
+            token,
+            "stock_items",
+            `select=id,quantity,alert_threshold,name,unit&id=eq.${input.stock_item_id}`,
+          );
+          if (item) {
+            const newQuantity = Math.max(0, Number(item.quantity) - input.quantity_kg);
+            await updateRows(token, "stock_items", `id=eq.${input.stock_item_id}`, { quantity: newQuantity });
+            if (Number(item.alert_threshold) > 0 && newQuantity <= Number(item.alert_threshold)) {
+              stockWarning = `Stock de ${item.name} bas : ${newQuantity} ${item.unit} restant(s).`;
+            }
+          }
+        }
+
+        return { ...row, stock_warning: stockWarning };
       },
     }),
 
@@ -449,11 +469,11 @@ export function buildAiTools(userId: string, token: string) {
         "Renvoie les alertes actives de l'élevage, tous modules confondus : stock bas, mortalité élevée, vaccins à faire, équipements en panne/à réviser, médicaments périmés ou proches de la péremption, tâches en retard. Les mêmes alertes que voit l'éleveur dans l'app. À consulter en début de conversation ou quand l'utilisateur demande un état des lieux.",
       inputSchema: z.object({}),
       execute: async () => {
-        const [stock, lots, mortality, equipment, medications, tasks] = await Promise.all([
-          selectRows<{ id: string; name: string; quantity: number; alert_threshold: number; unit: string }>(
+        const [stock, lots, mortality, equipment, medications, tasks, suppliers] = await Promise.all([
+          selectRows<{ id: string; name: string; quantity: number; alert_threshold: number; unit: string; supplier_id: string | null }>(
             token,
             "stock_items",
-            "select=id,name,quantity,alert_threshold,unit",
+            "select=id,name,quantity,alert_threshold,unit,supplier_id",
           ),
           selectRows<Lot>(token, "lots", "select=*&status=eq.active"),
           selectRows<MortalityRecord>(token, "mortality_records", "select=*"),
@@ -468,13 +488,16 @@ export function buildAiTools(userId: string, token: string) {
             "tasks",
             "select=id,title,due_date,priority&status=eq.pending",
           ),
+          selectRows<{ id: string; name: string; phone: string | null }>(token, "suppliers", "select=id,name,phone"),
         ]);
 
         const alerts: { type: string; priority: "high" | "medium" | "low"; message: string }[] = [];
 
         stock.forEach((s) => {
           if (Number(s.alert_threshold) > 0 && Number(s.quantity) <= Number(s.alert_threshold)) {
-            alerts.push({ type: "stock", priority: "medium", message: `Stock faible : ${s.name} (${s.quantity} ${s.unit})` });
+            const supplier = suppliers.find((sup) => sup.id === s.supplier_id);
+            const supplierHint = supplier ? ` — fournisseur habituel : ${supplier.name}${supplier.phone ? ` (${supplier.phone})` : ""}` : "";
+            alerts.push({ type: "stock", priority: "medium", message: `Stock faible : ${s.name} (${s.quantity} ${s.unit})${supplierHint}` });
           }
         });
 
@@ -523,7 +546,7 @@ export function buildAiTools(userId: string, token: string) {
     }),
 
     record_maintenance: tool({
-      description: "Enregistre une réparation/maintenance sur un équipement, et peut mettre à jour son statut.",
+      description: "Enregistre une réparation/maintenance sur un équipement, et peut mettre à jour son statut. Si le statut passe à 'broken', une tâche de réparation est créée automatiquement.",
       inputSchema: z.object({
         equipment_id: z.string().uuid(),
         type: z.enum(["repair", "routine", "inspection"]).default("repair"),
@@ -541,10 +564,20 @@ export function buildAiTools(userId: string, token: string) {
           cost: input.cost ?? 0,
           record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
         });
+
+        let autoTask: unknown = null;
         if (input.new_status) {
-          await updateRows(token, "equipment", `id=eq.${input.equipment_id}`, { status: input.new_status });
+          const [equip] = await updateRows<{ id: string; name: string }>(token, "equipment", `id=eq.${input.equipment_id}`, { status: input.new_status });
+          if (input.new_status === "broken" && equip) {
+            [autoTask] = await insertRows(token, "tasks", {
+              user_id: userId,
+              title: `Réparer ${equip.name}`,
+              priority: "high",
+              created_by: "ia",
+            });
+          }
         }
-        return row;
+        return { ...row, tache_creee: autoTask };
       },
     }),
 
