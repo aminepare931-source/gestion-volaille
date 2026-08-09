@@ -64,8 +64,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r bg-sidebar px-3 py-5 md:flex">
-        <div className="flex items-center gap-2 px-2 pb-6">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r bg-sidebar py-5 md:flex">
+        <div className="flex items-center gap-2 px-5 pb-6">
           <img
             src={logo}
             alt="Ma Volaille"
@@ -76,11 +76,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
           />
           <span className="text-lg font-bold tracking-tight">Ma Volaille</span>
         </div>
-        <div className="mb-3 flex items-center gap-2 px-1">
+        <div className="mb-3 flex items-center gap-2 px-4">
           <CommandSearch />
           <ThemeToggle />
         </div>
-        <nav className="flex flex-1 flex-col gap-1">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3">
           {nav.map((n) => {
             const active = pathname === n.to || pathname.startsWith(n.to + "/");
             return (
@@ -94,7 +94,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
                 )}
               >
-                <n.icon className="h-4.5 w-4.5" />
+                <n.icon className="h-4.5 w-4.5 shrink-0" />
                 {n.label}
               </Link>
             );
@@ -102,7 +102,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </nav>
         <button
           onClick={signOut}
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          className="mx-3 mt-2 flex shrink-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
         >
           <LogOut className="h-4.5 w-4.5" /> Déconnexion
         </button>

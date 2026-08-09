@@ -84,7 +84,7 @@ function Dashboard() {
   return (
     <>
       <PageHeader title={`Bonjour 👋`} subtitle={farm?.name ?? "Tableau de bord"} />
-      <div className="space-y-6 p-4 md:p-8">
+      <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-8">
         {/* Hero banner */}
         <div className="relative overflow-hidden rounded-3xl border shadow-sm">
           <img src={farmHero} alt="Élevage de volailles" width={1600} height={912} className="h-40 w-full object-cover md:h-56" />
@@ -128,82 +128,90 @@ function Dashboard() {
           <StatCard label="Santé du troupeau" value={`${health.score}/100`} sub={health.label} icon={HeartPulse} tone={health.tone === "success" ? "success" : health.tone === "warning" ? "accent" : "destructive"} />
         </div>
 
-        {/* Vaccination reminders */}
-        {vaccines.length > 0 && (
-          <div className="rounded-2xl border bg-card p-4 shadow-sm">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold">
-              <Syringe className="h-4 w-4 text-primary" /> Rappels de vaccination
-            </h3>
-            <ul className="space-y-2 text-sm">
-              {vaccines.map((v) => (
-                <li key={`${v.lotId}-${v.step.day}`} className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2">
-                  <Syringe className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="flex-1">
-                    <strong>{v.lotName}</strong> — {v.step.name} (J{v.step.day})
-                  </span>
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {/* Contenu principal (graphique) + widgets latéraux : deux colonnes sur grand écran,
+            pour ne pas laisser tout l'espace horizontal vide sur PC comme avant. */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {/* Chart */}
+            <div className="rounded-2xl border bg-card p-4 shadow-sm">
+              <h3 className="mb-4 font-semibold">Revenus vs Dépenses</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
+                  <YAxis tickLine={false} axisLine={false} fontSize={11} width={70} />
+                  <Tooltip formatter={(v: number) => formatMoney(v, cur)} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="var(--color-primary)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Smart recommendations */}
+            <div className="rounded-2xl border bg-gradient-to-br from-primary/10 to-accent/10 p-4 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                <HeartPulse className="h-4 w-4 text-primary" /> Recommandations intelligentes
+              </h3>
+              <ul className="space-y-2 text-sm">
+                {tips.map((t, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-        )}
 
-        {/* Smart recommendations */}
-        <div className="rounded-2xl border bg-gradient-to-br from-primary/10 to-accent/10 p-4 shadow-sm">
-          <h3 className="mb-3 flex items-center gap-2 font-semibold">
-            <HeartPulse className="h-4 w-4 text-primary" /> Recommandations intelligentes
-          </h3>
-          <ul className="space-y-2 text-sm">
-            {tips.map((t, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                <span>{t}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <div className="space-y-6">
+            <WeatherCard />
 
+            {/* Vaccination reminders */}
+            {vaccines.length > 0 && (
+              <div className="rounded-2xl border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                  <Syringe className="h-4 w-4 text-primary" /> Rappels de vaccination
+                </h3>
+                <ul className="space-y-2 text-sm">
+                  {vaccines.map((v) => (
+                    <li key={`${v.lotId}-${v.step.day}`} className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2">
+                      <Syringe className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="flex-1">
+                        <strong>{v.lotName}</strong> — {v.step.name} (J{v.step.day})
+                      </span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-
-        {/* Chart */}
-        <div className="rounded-2xl border bg-card p-4 shadow-sm">
-          <h3 className="mb-4 font-semibold">Revenus vs Dépenses</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={12} />
-              <YAxis tickLine={false} axisLine={false} fontSize={11} width={70} />
-              <Tooltip formatter={(v: number) => formatMoney(v, cur)} />
-              <Bar dataKey="value" radius={[8, 8, 0, 0]} fill="var(--color-primary)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Alerts */}
-        <div className="rounded-2xl border bg-card p-4 shadow-sm">
-          <h3 className="mb-3 flex items-center gap-2 font-semibold">
-            <AlertTriangle className="h-4 w-4 text-warning" /> Alertes
-          </h3>
-          {lowStock.length === 0 && highMortalityLots.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Aucune alerte. Tout va bien 🎉</p>
-          ) : (
-            <ul className="space-y-2 text-sm">
-              {lowStock.map((s) => (
-                <li key={s.id} className="flex items-center gap-2 rounded-lg bg-warning/10 px-3 py-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  Stock faible : <strong>{s.name}</strong> ({formatNumber(Number(s.quantity))} {s.unit})
-                </li>
-              ))}
-              {highMortalityLots.map((l) => (
-                <li key={l.id} className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2">
-                  <Skull className="h-4 w-4 text-destructive" />
-                  Mortalité élevée : <strong>{l.name}</strong>
-                </li>
-              ))}
-            </ul>
-          )}
+            {/* Alerts */}
+            <div className="rounded-2xl border bg-card p-4 shadow-sm">
+              <h3 className="mb-3 flex items-center gap-2 font-semibold">
+                <AlertTriangle className="h-4 w-4 text-warning" /> Alertes
+              </h3>
+              {lowStock.length === 0 && highMortalityLots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucune alerte. Tout va bien 🎉</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {lowStock.map((s) => (
+                    <li key={s.id} className="flex items-center gap-2 rounded-lg bg-warning/10 px-3 py-2">
+                      <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />
+                      Stock faible : <strong>{s.name}</strong> ({formatNumber(Number(s.quantity))} {s.unit})
+                    </li>
+                  ))}
+                  {highMortalityLots.map((l) => (
+                    <li key={l.id} className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2">
+                      <Skull className="h-4 w-4 shrink-0 text-destructive" />
+                      Mortalité élevée : <strong>{l.name}</strong>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </>
