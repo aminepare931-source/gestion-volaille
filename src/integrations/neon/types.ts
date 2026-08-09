@@ -477,6 +477,7 @@ export type Database = {
           id: string
           name: string
           quantity: number
+          supplier_id: string | null
           unit: string
           unit_cost: number
           updated_at: string
@@ -489,6 +490,7 @@ export type Database = {
           id?: string
           name: string
           quantity?: number
+          supplier_id?: string | null
           unit?: string
           unit_cost?: number
           updated_at?: string
@@ -500,6 +502,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          supplier_id?: string | null
           quantity?: number
           unit?: string
           unit_cost?: number
@@ -535,6 +538,45 @@ export type Database = {
           address?: string | null
           created_at?: string
           id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
           name?: string
           notes?: string | null
           phone?: string | null
@@ -598,6 +640,7 @@ export type Database = {
           category: string
           created_at: string
           description: string | null
+          supplier_id: string | null
           id: string
           lot_id: string | null
           record_date: string
@@ -609,6 +652,7 @@ export type Database = {
           category: string
           created_at?: string
           description?: string | null
+          supplier_id?: string | null
           id?: string
           lot_id?: string | null
           record_date?: string
@@ -620,6 +664,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string | null
+          supplier_id?: string | null
           id?: string
           lot_id?: string | null
           record_date?: string

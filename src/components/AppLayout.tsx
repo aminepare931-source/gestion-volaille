@@ -14,6 +14,7 @@ import {
   Users,
   Stethoscope,
   Wrench,
+  Truck,
   Settings,
   LogOut,
   Bot,
@@ -40,6 +41,7 @@ const nav = [
   { to: "/clients", label: "Clients", icon: Users },
   { to: "/health", label: "Santé", icon: Stethoscope },
   { to: "/equipment", label: "Équipements", icon: Wrench },
+  { to: "/suppliers", label: "Fournisseurs", icon: Truck },
   { to: "/settings", label: "Réglages", icon: Settings },
 ];
 

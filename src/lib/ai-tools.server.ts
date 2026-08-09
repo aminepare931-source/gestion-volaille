@@ -274,6 +274,7 @@ export function buildAiTools(userId: string, token: string) {
         amount: z.number().positive(),
         description: z.string().optional(),
         lot_id: z.string().uuid().nullable().optional(),
+        supplier_id: z.string().uuid().nullable().optional().describe("Fournisseur concerné, si applicable (voir list_suppliers)"),
         record_date: z.string().optional(),
       }),
       execute: async (input) => {
@@ -284,10 +285,39 @@ export function buildAiTools(userId: string, token: string) {
           amount: input.amount,
           description: input.description ?? null,
           lot_id: input.lot_id ?? null,
+          supplier_id: input.supplier_id ?? null,
           record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
         });
         return row;
       },
+    }),
+
+    create_supplier: tool({
+      description: "Crée une fiche fournisseur (aliment, médicaments, équipement...).",
+      inputSchema: z.object({
+        name: z.string(),
+        type: z.enum(["feed", "medication", "equipment", "general"]).default("general"),
+        phone: z.string().optional(),
+        address: z.string().optional(),
+        notes: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const [row] = await insertRows(token, "suppliers", {
+          user_id: userId,
+          name: input.name,
+          type: input.type ?? "general",
+          phone: input.phone ?? null,
+          address: input.address ?? null,
+          notes: input.notes ?? null,
+        });
+        return row;
+      },
+    }),
+
+    list_suppliers: tool({
+      description: "Liste les fournisseurs de l'éleveur.",
+      inputSchema: z.object({}),
+      execute: async () => selectRows(token, "suppliers", "select=id,name,type,phone&is_active=eq.true&order=name.asc"),
     }),
 
     adjust_stock: tool({
@@ -537,7 +567,7 @@ export function buildAiTools(userId: string, token: string) {
       description:
         "Modifie un enregistrement existant sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions). Donne uniquement les champs à changer. Toujours confirmer avec l'utilisateur ce qui va être modifié avant d'appeler cet outil, sauf instruction explicite et sans ambiguïté.",
       inputSchema: z.object({
-        table: z.enum(["lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales", "transactions", "health_records", "feed_records", "equipment"]),
+        table: z.enum(["lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales", "transactions", "health_records", "feed_records", "equipment", "suppliers"]),
         id: z.string().uuid(),
         values: z.record(z.string(), z.unknown()).describe("Champs à modifier, ex: { \"status\": \"sold\" }"),
       }),
@@ -549,12 +579,12 @@ export function buildAiTools(userId: string, token: string) {
 
     delete_record: tool({
       description:
-        "Supprime définitivement un enregistrement sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions, health_records, feed_records, mortality_records, weight_records, equipment, maintenance_records). Action irréversible : confirme toujours avec l'utilisateur avant de l'appeler, sauf instruction explicite et sans ambiguïté (ex: 'supprime la tâche X').",
+        "Supprime définitivement un enregistrement sur une table autorisée (lots, buildings, stock_items, medications, tasks, clients, sales, transactions, health_records, feed_records, mortality_records, weight_records, equipment, maintenance_records, suppliers). Action irréversible : confirme toujours avec l'utilisateur avant de l'appeler, sauf instruction explicite et sans ambiguïté (ex: 'supprime la tâche X').",
       inputSchema: z.object({
         table: z.enum([
           "lots", "buildings", "stock_items", "medications", "tasks", "clients", "sales",
           "transactions", "health_records", "feed_records", "mortality_records", "weight_records",
-          "equipment", "maintenance_records",
+          "equipment", "maintenance_records", "suppliers",
         ]),
         id: z.string().uuid(),
       }),

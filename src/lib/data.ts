@@ -21,6 +21,7 @@ export type Disease = Tables<"diseases">;
 export type Medication = Tables<"medications">;
 export type Equipment = Tables<"equipment">;
 export type MaintenanceRecord = Tables<"maintenance_records">;
+export type Supplier = Tables<"suppliers">;
 
 function useList<T>(table: string, order = "created_at", asc = false) {
   return useQuery({
@@ -71,6 +72,7 @@ export const useDiseases = () => useList<Disease>("diseases", "name", true);
 export const useMedications = () => useList<Medication>("medications", "name", true);
 export const useEquipment = () => useList<Equipment>("equipment", "name", true);
 export const useMaintenanceRecords = () => useList<MaintenanceRecord>("maintenance_records", "record_date");
+export const useSuppliers = () => useList<Supplier>("suppliers", "name", true);
 
 export function useLot(id: string) {
   return useQuery({
