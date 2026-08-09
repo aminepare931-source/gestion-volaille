@@ -152,7 +152,8 @@ export function buildAiTools(userId: string, token: string) {
     }),
 
     create_health_record: tool({
-      description: "Enregistre un soin/vaccin pour un lot (ex: les premiers soins à l'arrivée).",
+      description:
+        "Enregistre un soin/vaccin pour un lot. Si un médicament du stock est utilisé (medication_id + quantity_used), le stock est automatiquement décompté — pas besoin d'appeler adjust_stock ou update_record en plus. Si une maladie de l'encyclopédie a été identifiée (voir get_disease_info), relie-la via disease_id.",
       inputSchema: z.object({
         lot_id: z.string().uuid(),
         type: z.enum(["vaccine", "treatment", "checkup"]).default("vaccine"),
@@ -160,6 +161,9 @@ export function buildAiTools(userId: string, token: string) {
         cost: z.number().nonnegative().default(0),
         notes: z.string().optional(),
         record_date: z.string().optional(),
+        medication_id: z.string().uuid().nullable().optional().describe("Médicament du stock utilisé, si applicable (voir list_medications)"),
+        quantity_used: z.number().nonnegative().nullable().optional().describe("Quantité du médicament utilisée, décomptée automatiquement du stock"),
+        disease_id: z.string().uuid().nullable().optional().describe("Maladie identifiée, si applicable (voir get_disease_info)"),
       }),
       execute: async (input) => {
         const [row] = await insertRows(token, "health_records", {
@@ -170,8 +174,26 @@ export function buildAiTools(userId: string, token: string) {
           cost: input.cost ?? 0,
           notes: input.notes ?? null,
           record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
+          medication_id: input.medication_id ?? null,
+          quantity_used: input.quantity_used ?? null,
+          disease_id: input.disease_id ?? null,
         });
-        return row;
+
+        let stockWarning: string | null = null;
+        if (input.medication_id && input.quantity_used) {
+          const [med] = await selectRows<{ id: string; quantity: number; name: string }>(
+            token,
+            "medications",
+            `select=id,quantity,name&id=eq.${input.medication_id}`,
+          );
+          if (med) {
+            const newQuantity = Math.max(0, Number(med.quantity) - input.quantity_used);
+            await updateRows(token, "medications", `id=eq.${input.medication_id}`, { quantity: newQuantity });
+            if (newQuantity <= 0) stockWarning = `Stock de ${med.name} épuisé.`;
+          }
+        }
+
+        return { ...row, stock_warning: stockWarning };
       },
     }),
 
@@ -424,10 +446,10 @@ export function buildAiTools(userId: string, token: string) {
 
     get_alerts: tool({
       description:
-        "Renvoie les alertes actives de l'élevage (stock bas, mortalité élevée sur un lot, vaccins à faire bientôt, lots qui approchent de l'âge de vente). Les mêmes alertes que voit l'éleveur dans l'app. À consulter en début de conversation ou quand l'utilisateur demande un état des lieux.",
+        "Renvoie les alertes actives de l'élevage, tous modules confondus : stock bas, mortalité élevée, vaccins à faire, équipements en panne/à réviser, médicaments périmés ou proches de la péremption, tâches en retard. Les mêmes alertes que voit l'éleveur dans l'app. À consulter en début de conversation ou quand l'utilisateur demande un état des lieux.",
       inputSchema: z.object({}),
       execute: async () => {
-        const [stock, lots, mortality] = await Promise.all([
+        const [stock, lots, mortality, equipment, medications, tasks] = await Promise.all([
           selectRows<{ id: string; name: string; quantity: number; alert_threshold: number; unit: string }>(
             token,
             "stock_items",
@@ -435,6 +457,17 @@ export function buildAiTools(userId: string, token: string) {
           ),
           selectRows<Lot>(token, "lots", "select=*&status=eq.active"),
           selectRows<MortalityRecord>(token, "mortality_records", "select=*"),
+          selectRows<{ id: string; name: string; status: string }>(token, "equipment", "select=id,name,status"),
+          selectRows<{ id: string; name: string; quantity: number; expiry_date: string | null }>(
+            token,
+            "medications",
+            "select=id,name,quantity,expiry_date",
+          ),
+          selectRows<{ id: string; title: string; due_date: string | null; priority: string }>(
+            token,
+            "tasks",
+            "select=id,title,due_date,priority&status=eq.pending",
+          ),
         ]);
 
         const alerts: { type: string; priority: "high" | "medium" | "low"; message: string }[] = [];
@@ -457,6 +490,26 @@ export function buildAiTools(userId: string, token: string) {
             priority: v.dueInDays <= 0 ? "high" : "medium",
             message: `${v.lotName} : ${v.step.name} (J${v.step.day}) — ${v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}`,
           });
+        });
+
+        equipment.forEach((e) => {
+          if (e.status === "broken") alerts.push({ type: "equipement", priority: "high", message: `${e.name} est en panne` });
+          else if (e.status === "maintenance") alerts.push({ type: "equipement", priority: "medium", message: `${e.name} nécessite une maintenance` });
+        });
+
+        const now = Date.now();
+        medications.forEach((m) => {
+          if (Number(m.quantity) <= 0) return;
+          if (!m.expiry_date) return;
+          const daysLeft = Math.floor((new Date(m.expiry_date).getTime() - now) / 86400000);
+          if (daysLeft < 0) alerts.push({ type: "medicament", priority: "high", message: `${m.name} est périmé` });
+          else if (daysLeft <= 30) alerts.push({ type: "medicament", priority: "medium", message: `${m.name} périme dans ${daysLeft} j` });
+        });
+
+        tasks.forEach((t) => {
+          if (!t.due_date) return;
+          const daysOver = Math.floor((now - new Date(t.due_date).getTime()) / 86400000);
+          if (daysOver > 0) alerts.push({ type: "tache", priority: t.priority === "urgent" || t.priority === "high" ? "high" : "medium", message: `Tâche en retard : ${t.title} (${daysOver} j)` });
         });
 
         return { nombre_alertes: alerts.length, alertes: alerts };

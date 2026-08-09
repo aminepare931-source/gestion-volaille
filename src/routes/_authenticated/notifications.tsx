@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Bell, AlertTriangle, Skull, Syringe, Package } from "lucide-react";
+import { Bell, AlertTriangle, Skull, Syringe, Package, Wrench, Pill, ListChecks } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { Badge } from "@/components/ui/badge";
-import { useStockItems, useLots, useMortalityRecords, lotDeaths } from "@/lib/data";
+import { useStockItems, useLots, useMortalityRecords, useEquipment, useMedications, useTasks, lotDeaths } from "@/lib/data";
 import { formatNumber, ageInDays } from "@/lib/format";
 import { upcomingVaccines } from "@/lib/insights";
 
@@ -22,6 +22,9 @@ function NotificationsPage() {
   const { data: stock = [] } = useStockItems();
   const { data: lots = [] } = useLots();
   const { data: mortality = [] } = useMortalityRecords();
+  const { data: equipment = [] } = useEquipment();
+  const { data: medications = [] } = useMedications();
+  const { data: tasks = [] } = useTasks();
 
   const alerts: Alert[] = [];
 
@@ -46,6 +49,24 @@ function NotificationsPage() {
       priority: v.dueInDays <= 0 ? "high" : "medium",
       message: `${v.lotName} : ${v.step.name} (J${v.step.day}) — ${v.dueInDays <= 0 ? "à faire maintenant" : `dans ${v.dueInDays} j`}`,
     });
+  });
+
+  equipment.forEach((e) => {
+    if (e.status === "broken") alerts.push({ id: `eq-${e.id}`, type: "Équipement", icon: Wrench, priority: "high", message: `${e.name} est en panne` });
+    else if (e.status === "maintenance") alerts.push({ id: `eq-${e.id}`, type: "Équipement", icon: Wrench, priority: "medium", message: `${e.name} nécessite une maintenance` });
+  });
+
+  const now = Date.now();
+  medications.forEach((m) => {
+    if (Number(m.quantity) <= 0 || !m.expiry_date) return;
+    const daysLeft = Math.floor((new Date(m.expiry_date).getTime() - now) / 86400000);
+    if (daysLeft < 0) alerts.push({ id: `med-${m.id}`, type: "Médicament", icon: Pill, priority: "high", message: `${m.name} est périmé` });
+    else if (daysLeft <= 30) alerts.push({ id: `med-${m.id}`, type: "Médicament", icon: Pill, priority: "medium", message: `${m.name} périme dans ${daysLeft} j` });
+  });
+
+  tasks.filter((t) => t.status === "pending" && t.due_date).forEach((t) => {
+    const daysOver = Math.floor((now - new Date(t.due_date as string).getTime()) / 86400000);
+    if (daysOver > 0) alerts.push({ id: `task-${t.id}`, type: "Tâche", icon: ListChecks, priority: t.priority === "urgent" || t.priority === "high" ? "high" : "medium", message: `Tâche en retard : ${t.title} (${daysOver} j)` });
   });
 
   const tones: Record<string, string> = {

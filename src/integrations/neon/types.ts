@@ -228,10 +228,13 @@ export type Database = {
         Row: {
           cost: number
           created_at: string
+          disease_id: string | null
           id: string
           lot_id: string
+          medication_id: string | null
           name: string
           notes: string | null
+          quantity_used: number | null
           record_date: string
           type: string
           user_id: string
@@ -239,10 +242,13 @@ export type Database = {
         Insert: {
           cost?: number
           created_at?: string
+          disease_id?: string | null
           id?: string
           lot_id: string
+          medication_id?: string | null
           name: string
           notes?: string | null
+          quantity_used?: number | null
           record_date?: string
           type?: string
           user_id: string
@@ -250,10 +256,13 @@ export type Database = {
         Update: {
           cost?: number
           created_at?: string
+          disease_id?: string | null
           id?: string
           lot_id?: string
+          medication_id?: string | null
           name?: string
           notes?: string | null
+          quantity_used?: number | null
           record_date?: string
           type?: string
           user_id?: string
