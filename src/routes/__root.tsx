@@ -138,7 +138,13 @@ function RootComponent() {
       ]);
       if (cancelled) return;
       const persister = createSyncStoragePersister({ storage: window.localStorage, key: "mv-query-cache" });
-      persistQueryClient({ queryClient, persister, maxAge: 1000 * 60 * 60 * 24 * 7 });
+      const restore = persistQueryClient({ queryClient, persister, maxAge: 1000 * 60 * 60 * 24 * 7 });
+      // persistQueryClient restaure le cache de façon asynchrone ; une fois fait, on rejoue
+      // les mutations qui étaient en attente avant un rechargement de page (ex: l'utilisateur
+      // a créé un lot hors-ligne, puis a fermé/rouvert l'app avant le retour du réseau).
+      Promise.resolve(restore).then(() => {
+        if (!cancelled) void queryClient.resumePausedMutations();
+      });
     })();
     return () => {
       cancelled = true;

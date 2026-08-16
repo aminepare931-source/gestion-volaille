@@ -14,7 +14,10 @@ export const getRouter = () => {
         networkMode: "offlineFirst",
       },
       mutations: {
-        networkMode: "offlineFirst",
+        // "online" (défaut) : une mutation lancée hors-ligne est mise en PAUSE plutôt que
+        // d'échouer immédiatement, puis rejouée automatiquement au retour du réseau
+        // (comportement natif de React Query via l'onlineManager). "offlineFirst" ferait
+        // échouer l'écriture dès la première tentative hors-ligne — pas ce qu'on veut ici.
       },
     },
   });

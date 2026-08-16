@@ -70,6 +70,18 @@ export function FormDialog({
         if (f.type === "number") v = Number(v) || 0;
         payload[f.name] = v;
       }
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        // Hors-ligne : la mutation est mise en attente par React Query et ne se résoudra
+        // qu'au retour du réseau (potentiellement bien plus tard) — ne pas bloquer l'UI
+        // dessus, sinon le dialogue resterait "en cours" indéfiniment.
+        onSubmit(payload).catch((err) => {
+          toast.error(err instanceof Error ? err.message : "Erreur lors de l'envoi différé");
+        });
+        toast.info("Hors ligne : sera enregistré automatiquement au retour du réseau");
+        setValues(initialValues ?? {});
+        setOpen(false);
+        return;
+      }
       await onSubmit(payload);
       toast.success("Enregistré");
       setValues(initialValues ?? {});

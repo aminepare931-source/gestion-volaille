@@ -21,7 +21,7 @@ export function OfflineBanner() {
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-warning px-4 py-1.5 text-center text-xs font-medium text-warning-foreground">
       <WifiOff className="h-3.5 w-3.5" />
-      Mode hors ligne — vos dernières données restent consultables.
+      Mode hors ligne — vos données restent consultables, vos actions seront envoyées au retour du réseau.
     </div>
   );
 }
