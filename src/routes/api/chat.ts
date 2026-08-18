@@ -38,7 +38,14 @@ export const Route = createFileRoute("/api/chat")({
           const { payload } = await jwtVerify(token, getJwks());
           if (!payload.sub) throw new Error("no sub");
           userId = payload.sub;
-        } catch {
+        } catch (err) {
+          // Ne pas confondre "config serveur cassée" (variable d'env manquante) avec
+          // "token invalide" : le premier cas doit être visible et explicite, pas se
+          // déguiser en 401 générique qui fait perdre du temps à diagnostiquer.
+          if (err instanceof Error && err.message.includes("Variable d'environnement manquante")) {
+            console.error("[chat] config error:", err.message);
+            return new Response(`Erreur de configuration serveur : ${err.message}`, { status: 500 });
+          }
           return new Response("Unauthorized", { status: 401 });
         }
 
