@@ -31,26 +31,42 @@ function AuthPage() {
   const navigate = useNavigate();
   const { mode: initialMode } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "register">(initialMode ?? "login");
+  const [method, setMethod] = useState<"phone" | "email">("phone");
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [farmName, setFarmName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+
+  // Connexion par téléphone sans SMS/coût : le numéro devient l'identifiant, transformé
+  // en email "fantôme" en coulisses pour rester compatible avec l'auth email/mot de passe
+  // de Neon (invisible pour l'utilisateur, qui ne voit et ne tape que son numéro).
+  function normalizePhone(raw: string) {
+    let digits = raw.replace(/[^0-9]/g, "");
+    if (!digits.startsWith("226") && digits.length === 8) digits = "226" + digits; // BF par défaut
+    return digits;
+  }
+  function phoneToSyntheticEmail(raw: string) {
+    return `${normalizePhone(raw)}@tel.mavolaille.app`;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
+      const identifier = method === "phone" ? phoneToSyntheticEmail(phone) : email;
+
       if (mode === "login") {
-        const { error } = await neon.auth.signInWithPassword({ email, password });
+        const { error } = await neon.auth.signInWithPassword({ email: identifier, password });
         if (error) throw error;
       } else {
         const { data, error } = await neon.auth.signUp({
-          email,
+          email: identifier,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: fullName, farm_name: farmName || "Ma Ferme" },
+            ...(method === "email" ? { emailRedirectTo: window.location.origin } : {}),
+            data: { full_name: fullName, farm_name: farmName || "Ma Ferme", phone: method === "phone" ? normalizePhone(phone) : null },
           },
         });
         if (error) throw error;
@@ -59,7 +75,7 @@ function AuthPage() {
         // automatiquement le profil + la ferme par défaut à l'inscription : on le fait ici.
         const userId = data.user?.id;
         if (userId) {
-          await neon.from("profiles").insert({ id: userId, full_name: fullName });
+          await neon.from("profiles").insert({ id: userId, full_name: fullName, phone: method === "phone" ? normalizePhone(phone) : null });
           await neon.from("farms").insert({ user_id: userId, name: farmName || "Ma Ferme" });
         }
       }
@@ -132,6 +148,23 @@ function AuthPage() {
           </div>
 
           <div className="rounded-2xl border bg-card p-6 shadow-sm">
+            <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+              <button
+                type="button"
+                onClick={() => setMethod("phone")}
+                className={`rounded-md py-1.5 text-sm font-medium transition-colors ${method === "phone" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+              >
+                Téléphone
+              </button>
+              <button
+                type="button"
+                onClick={() => setMethod("email")}
+                className={`rounded-md py-1.5 text-sm font-medium transition-colors ${method === "email" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+              >
+                Email
+              </button>
+            </div>
+
             <form onSubmit={submit} className="space-y-4">
               {mode === "register" && (
                 <>
@@ -145,10 +178,25 @@ function AuthPage() {
                   </div>
                 </>
               )}
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </div>
+              {method === "phone" ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone">Numéro de téléphone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    inputMode="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="70 12 34 56"
+                    required
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="password">Mot de passe</Label>
                 <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
