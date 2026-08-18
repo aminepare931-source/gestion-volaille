@@ -100,7 +100,7 @@ Météo : ${
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({
       api: "/api/chat",
       headers: (): Record<string, string> => (tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {}),
@@ -120,9 +120,13 @@ Météo : ${
     inputRef.current?.focus();
   }, []);
 
-  function submit(text: string) {
+  async function submit(text: string) {
     const t = text.trim();
     if (!t || busy) return;
+    if (!tokenRef.current) {
+      const { data } = await neon.auth.getSession();
+      tokenRef.current = data.session?.access_token ?? null;
+    }
     sendMessage({ text: t }, { body: { context } });
     setInput("");
     setTimeout(() => inputRef.current?.focus(), 0);
@@ -182,6 +186,14 @@ Météo : ${
           {status === "submitted" && (
             <div className="flex justify-start">
               <div className="rounded-2xl border bg-card px-4 py-2.5 text-sm text-muted-foreground">Réflexion…</div>
+            </div>
+          )}
+
+          {error && (
+            <div className="flex justify-start">
+              <div className="max-w-[85%] rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+                {error.message || "Une erreur est survenue. Vérifiez votre connexion et réessayez."}
+              </div>
             </div>
           )}
         </div>
