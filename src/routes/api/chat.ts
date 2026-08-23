@@ -92,7 +92,7 @@ ${ctx || "Aucune donnée transmise."}`;
         const groq = createGroqProvider(key);
         try {
           const result = streamText({
-            model: groq("llama-3.3-70b-versatile"),
+            model: groq("openai/gpt-oss-120b"),
             system,
             messages: await convertToModelMessages(messages as UIMessage[]),
             tools: buildAiTools(userId, token),
