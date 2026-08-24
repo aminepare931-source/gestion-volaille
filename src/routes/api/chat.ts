@@ -1,4 +1,4 @@
-import { createGroqProvider } from "@/lib/ai-gateway.server";
+import { createGroqProvider, pickAvailableGroqModel } from "@/lib/ai-gateway.server";
 import { buildAiTools } from "@/lib/ai-tools.server";
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from "ai";
@@ -91,14 +91,15 @@ ${ctx || "Aucune donnée transmise."}`;
 
         const groq = createGroqProvider(key);
         try {
+          const modelId = await pickAvailableGroqModel(groq);
           const result = streamText({
-            model: groq("openai/gpt-oss-120b"),
+            model: groq(modelId),
             system,
             messages: await convertToModelMessages(messages as UIMessage[]),
             tools: buildAiTools(userId, token),
             stopWhen: stepCountIs(10),
             onError: ({ error }) => {
-              console.error("[chat] streamText error:", error);
+              console.error(`[chat] streamText error (modèle ${modelId}):`, error);
             },
           });
 
