@@ -1,4 +1,4 @@
-// Guarded service-worker registration for Ma Volaille.
+// Guarded service-worker registration for Élevage+.
 // Never registers in dev, iframe, or Lovable preview. Supports ?sw=off kill switch.
 const SW_URL = "/sw.js";
 

@@ -81,17 +81,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ma Volaille — Gestion d'élevage de volailles" },
-      { name: "description", content: "Ma Volaille : gérez vos lots, la croissance, la mortalité, l'alimentation, les finances et les ventes de votre élevage de volailles. Simple et puissant." },
-      { name: "author", content: "Ma Volaille" },
-      { property: "og:title", content: "Ma Volaille — Gestion d'élevage de volailles" },
-      { property: "og:description", content: "Suivez lots, finances, ventes et rentabilité de votre élevage avicole depuis votre téléphone." },
+      { title: "Élevage+ — Gestion d'élevage multi-espèces" },
+      { name: "description", content: "Élevage+ : gérez vos lots, la croissance, la mortalité, l'alimentation, les finances et les ventes de votre élevage (volailles, bovins, ovins, caprins, porcins). Simple et puissant." },
+      { name: "author", content: "Élevage+" },
+      { property: "og:title", content: "Élevage+ — Gestion d'élevage multi-espèces" },
+      { property: "og:description", content: "Suivez lots, finances, ventes et rentabilité de votre élevage depuis votre téléphone." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#143a26" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
-      { name: "apple-mobile-web-app-title", content: "Ma Volaille" },
+      { name: "apple-mobile-web-app-title", content: "Élevage+" },
     ],
     links: [
       {

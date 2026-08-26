@@ -179,7 +179,7 @@ function LotDetail() {
     exportLotPdf({
       lotName: l.name,
       breed: l.breed ?? "",
-      farmName: farm?.name ?? "Ma Volaille",
+      farmName: farm?.name ?? "Ma Ferme",
       currency: cur,
       arrivalDate: l.arrival_date,
       ageDays: ageInDays(l.arrival_date),

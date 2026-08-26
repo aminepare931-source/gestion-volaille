@@ -67,7 +67,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-8">
           <div className="flex items-center gap-2">
             <img src={logo} alt="" width={32} height={32} className="h-8 w-8" />
-            <span className="ld-display text-lg font-semibold">Ma Volaille</span>
+            <span className="ld-display text-lg font-semibold">Élevage+</span>
           </div>
           <nav className="flex items-center gap-2">
             <Link
@@ -204,7 +204,7 @@ export function LandingPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 text-sm text-muted-foreground md:flex-row md:px-8">
           <div className="flex items-center gap-2">
             <img src={logo} alt="" width={20} height={20} className="h-5 w-5" />
-            <span>Ma Volaille</span>
+            <span>Élevage+</span>
           </div>
           <p>© {new Date().getFullYear()} — Gestion d'élevage pour l'Afrique de l'Ouest.</p>
         </div>

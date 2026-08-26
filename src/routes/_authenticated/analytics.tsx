@@ -40,7 +40,7 @@ function AnalyticsPage() {
 
   function handleExport() {
     exportCSV(
-      "analyses-ma-volaille",
+      "analyses-elevage",
       perLot.map((l) => ({
         Lot: l.name,
         Revenus: Math.round(l.rev),

@@ -47,6 +47,15 @@ const nav = [
 
 // Bottom bar shows the 4 most important destinations on mobile; a "Plus" menu holds the rest.
 const bottomNav = [nav[0], nav[1], nav[4], nav[6]];
+const bottomNavPaths = new Set(bottomNav.map((n) => n.to));
+const restNav = nav.filter((n) => !bottomNavPaths.has(n.to) && n.to !== "/settings");
+const byPath = (path: string) => restNav.find((n) => n.to === path)!;
+const menuGroups = [
+  { label: "Élevage", items: [byPath("/buildings"), byPath("/stock"), byPath("/health"), byPath("/equipment")] },
+  { label: "Commerce", items: [byPath("/sales"), byPath("/clients"), byPath("/suppliers")] },
+  { label: "Suivi", items: [byPath("/analytics"), byPath("/notifications"), byPath("/tasks")] },
+  { label: "Compte", items: [nav.find((n) => n.to === "/settings")!] },
+];
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -68,13 +77,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-2 px-5 pb-6">
           <img
             src={logo}
-            alt="Ma Volaille"
+            alt="Élevage+"
             width={36}
             height={36}
             className="h-9 w-9 rounded-xl"
             loading="lazy"
           />
-          <span className="text-lg font-bold tracking-tight">Ma Volaille</span>
+          <span className="text-lg font-bold tracking-tight">Élevage+</span>
         </div>
         <div className="mb-3 flex items-center gap-2 px-4">
           <CommandSearch />
@@ -139,38 +148,45 @@ export function AppLayout({ children }: { children: ReactNode }) {
               Plus
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl">
+          <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
             <SheetHeader>
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
-            <div className="grid grid-cols-3 gap-2 py-4">
-              {nav.map((n) => {
-                const active = pathname === n.to || pathname.startsWith(n.to + "/");
-                return (
-                  <Link
-                    key={n.to}
-                    to={n.to}
-                    onClick={() => setMenuOpen(false)}
-                    className={cn(
-                      "flex flex-col items-center gap-2 rounded-xl border p-3 text-center text-xs font-medium transition-colors",
-                      active
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:bg-secondary",
-                    )}
-                  >
-                    <n.icon className="h-5 w-5" />
-                    {n.label}
-                  </Link>
-                );
-              })}
+            <div className="space-y-5 py-4">
+              {menuGroups.map((group) => (
+                <div key={group.label}>
+                  <p className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{group.label}</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    {group.items.map((n) => {
+                      const active = pathname === n.to || pathname.startsWith(n.to + "/");
+                      return (
+                        <Link
+                          key={n.to}
+                          to={n.to}
+                          onClick={() => setMenuOpen(false)}
+                          className={cn(
+                            "flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center text-[11px] font-medium transition-colors",
+                            active
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:bg-secondary",
+                          )}
+                        >
+                          <n.icon className="h-5 w-5" />
+                          {n.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
               <button
                 onClick={() => {
                   setMenuOpen(false);
                   signOut();
                 }}
-                className="flex flex-col items-center gap-2 rounded-xl border border-border p-3 text-center text-xs font-medium text-destructive transition-colors hover:bg-destructive/10"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-border p-3 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
               >
-                <LogOut className="h-5 w-5" />
+                <LogOut className="h-4 w-4" />
                 Déconnexion
               </button>
             </div>

@@ -41,9 +41,9 @@ export function InstallPrompt() {
         <X className="h-4 w-4" />
       </button>
       <div className="flex items-center gap-3">
-        <img src={logo} alt="Ma Volaille" width={48} height={48} className="h-12 w-12 rounded-xl" loading="lazy" />
+        <img src={logo} alt="Élevage+" width={48} height={48} className="h-12 w-12 rounded-xl" loading="lazy" />
         <div className="pr-6">
-          <p className="text-sm font-semibold">Installer Ma Volaille</p>
+          <p className="text-sm font-semibold">Installer Élevage+</p>
           <p className="text-xs text-muted-foreground">Accès rapide et hors ligne depuis votre écran d'accueil.</p>
         </div>
       </div>

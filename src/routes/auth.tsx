@@ -20,8 +20,8 @@ export const Route = createFileRoute("/auth")({
   },
   head: () => ({
     meta: [
-      { title: "Connexion — Ma Volaille" },
-      { name: "description", content: "Connectez-vous à Ma Volaille pour gérer votre élevage de volailles." },
+      { title: "Connexion — Élevage+" },
+      { name: "description", content: "Connectez-vous à Élevage+ pour gérer votre élevage." },
     ],
   }),
   component: AuthPage,
@@ -112,8 +112,8 @@ function AuthPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-10 text-white">
           <div className="mb-4 flex items-center gap-3">
-            <img src={logo} alt="Ma Volaille" width={44} height={44} className="h-11 w-11" />
-            <span className="text-2xl font-bold">Ma Volaille</span>
+            <img src={logo} alt="Élevage+" width={44} height={44} className="h-11 w-11" />
+            <span className="text-2xl font-bold">Élevage+</span>
           </div>
           <p className="max-w-md text-lg font-medium leading-snug">
             La gestion moderne de votre élevage de volailles, pensée pour l'Afrique.
@@ -136,7 +136,7 @@ function AuthPage() {
         </div>
         <div className="w-full max-w-sm">
           <div className="mb-8 flex flex-col items-center text-center lg:items-start lg:text-left">
-            <img src={logo} alt="Ma Volaille" width={56} height={56} className="h-14 w-14" />
+            <img src={logo} alt="Élevage+" width={56} height={56} className="h-14 w-14" />
             <h1 className="mt-4 text-2xl font-bold tracking-tight">
               {mode === "login" ? "Bon retour 👋" : "Créez votre compte"}
             </h1>

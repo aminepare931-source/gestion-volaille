@@ -39,10 +39,10 @@ export default defineConfig({
         devOptions: { enabled: false },
         filename: "sw.js",
         manifest: {
-          name: "Ma Volaille — Gestion d'élevage",
-          short_name: "Ma Volaille",
+          name: "Élevage+ — Gestion d'élevage",
+          short_name: "Élevage+",
           description:
-            "Gérez vos lots, la croissance, la mortalité, l'alimentation, les finances et les ventes de votre élevage de volailles.",
+            "Gérez vos lots, la croissance, la mortalité, l'alimentation, les finances et les ventes de votre élevage (volailles, bovins, ovins, caprins, porcins).",
           theme_color: "#143a26",
           background_color: "#0f2a1c",
           display: "standalone",

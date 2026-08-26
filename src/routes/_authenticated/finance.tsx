@@ -47,7 +47,7 @@ function FinancePage() {
 
   function handleExport() {
     exportCSV(
-      "finances-ma-volaille",
+      "finances-elevage",
       transactions.map((t) => ({
         Date: t.record_date,
         Type: t.type === "expense" ? "Dépense" : "Revenu",
