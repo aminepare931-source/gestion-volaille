@@ -29,6 +29,7 @@ import { Route as AuthenticatedTasksRouteImport } from './routes/_authenticated/
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedLotsIndexRouteImport } from './routes/_authenticated/lots.index'
 import { Route as AuthenticatedLotsIdRouteImport } from './routes/_authenticated/lots.$id'
+import { Route as ApiActionsCommitRouteImport } from './routes/api/actions/commit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -130,6 +131,11 @@ const AuthenticatedLotsIdRoute = AuthenticatedLotsIdRouteImport.update({
   path: '/lots/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiActionsCommitRoute = ApiActionsCommitRouteImport.update({
+  id: '/api/actions/commit',
+  path: '/api/actions/commit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/tasks': typeof AuthenticatedTasksRoute
   '/api/chat': typeof ApiChatRoute
   '/lots/$id': typeof AuthenticatedLotsIdRoute
+  '/api/actions/commit': typeof ApiActionsCommitRoute
   '/lots/': typeof AuthenticatedLotsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/tasks': typeof AuthenticatedTasksRoute
   '/api/chat': typeof ApiChatRoute
   '/lots/$id': typeof AuthenticatedLotsIdRoute
+  '/api/actions/commit': typeof ApiActionsCommitRoute
   '/lots': typeof AuthenticatedLotsIndexRoute
 }
 export interface FileRoutesById {
@@ -194,6 +202,7 @@ export interface FileRoutesById {
   '/_authenticated/tasks': typeof AuthenticatedTasksRoute
   '/api/chat': typeof ApiChatRoute
   '/_authenticated/lots/$id': typeof AuthenticatedLotsIdRoute
+  '/api/actions/commit': typeof ApiActionsCommitRoute
   '/_authenticated/lots/': typeof AuthenticatedLotsIndexRoute
 }
 export interface FileRouteTypes {
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/api/chat'
     | '/lots/$id'
+    | '/api/actions/commit'
     | '/lots/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -238,6 +248,7 @@ export interface FileRouteTypes {
     | '/tasks'
     | '/api/chat'
     | '/lots/$id'
+    | '/api/actions/commit'
     | '/lots'
   id:
     | '__root__'
@@ -260,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tasks'
     | '/api/chat'
     | '/_authenticated/lots/$id'
+    | '/api/actions/commit'
     | '/_authenticated/lots/'
   fileRoutesById: FileRoutesById
 }
@@ -268,6 +280,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiActionsCommitRoute: typeof ApiActionsCommitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLotsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/actions/commit': {
+      id: '/api/actions/commit'
+      path: '/api/actions/commit'
+      fullPath: '/api/actions/commit'
+      preLoaderRoute: typeof ApiActionsCommitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -461,6 +481,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiActionsCommitRoute: ApiActionsCommitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

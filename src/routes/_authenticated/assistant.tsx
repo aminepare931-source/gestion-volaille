@@ -2,12 +2,14 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
-import { Bot, Send, Sparkles } from "lucide-react";
+import { Bot, Send, Sparkles, CheckCheck } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { neon } from "@/integrations/neon/client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AiActionCard, type ActionState } from "@/components/ai/AiActionCard";
 import {
   useLots,
   useMortalityRecords,
@@ -107,6 +109,73 @@ Météo : ${
     }),
   });
 
+  const queryClient = useQueryClient();
+  const [actions, setActions] = useState<Record<string, ActionState>>({});
+
+  // Détecte les nouvelles propositions d'action dans les messages et les ajoute à l'état
+  // local (sans jamais écraser une action déjà en cours de traitement/modifiée).
+  useEffect(() => {
+    setActions((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const m of messages) {
+        for (const part of m.parts as any[]) {
+          const output = part?.output;
+          if (output && output.__pending_action && !next[output.actionId]) {
+            next[output.actionId] = { kind: output.kind, summary: output.summary, payload: output.payload, status: "pending" };
+            changed = true;
+          }
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [messages]);
+
+  async function getToken() {
+    if (!tokenRef.current) {
+      const { data } = await neon.auth.getSession();
+      tokenRef.current = data.session?.access_token ?? null;
+    }
+    return tokenRef.current;
+  }
+
+  async function approveAction(actionId: string) {
+    const action = actions[actionId];
+    if (!action) return;
+    setActions((p) => ({ ...p, [actionId]: { ...action, status: "approving" } }));
+    try {
+      const t = await getToken();
+      const res = await fetch("/api/actions/commit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+        body: JSON.stringify({ kind: action.kind, payload: action.payload }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || `Erreur ${res.status}`);
+      setActions((p) => ({ ...p, [actionId]: { ...action, status: "done" } }));
+      queryClient.invalidateQueries();
+    } catch (err) {
+      setActions((p) => ({ ...p, [actionId]: { ...action, status: "error", error: err instanceof Error ? err.message : "Erreur" } }));
+    }
+  }
+
+  function rejectAction(actionId: string) {
+    setActions((p) => (p[actionId] ? { ...p, [actionId]: { ...p[actionId], status: "rejected" } } : p));
+  }
+
+  function changeActionPayload(actionId: string, payload: Record<string, unknown>) {
+    setActions((p) => (p[actionId] ? { ...p, [actionId]: { ...p[actionId], payload } } : p));
+  }
+
+  async function approveAllInOrder(actionIds: string[]) {
+    // Séquentiel, pas en parallèle : certaines actions dépendent de l'ID d'une
+    // action précédente (ex: un soin qui référence le lot juste créé) — l'ordre
+    // de création doit être respecté pour que les clés étrangères soient valides.
+    for (const id of actionIds) {
+      if (actions[id]?.status === "pending") await approveAction(id);
+    }
+  }
+
   const [input, setInput] = useState("");
   const busy = status === "submitted" || status === "streaming";
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -144,9 +213,9 @@ Météo : ${
               </div>
               <h3 className="text-lg font-semibold">Bonjour, je suis votre Coach Élevage</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Je connais vos lots, vos finances, votre stock et la météo — et je peux agir directement :
-                créer un lot, enregistrer un soin ou une vente, ajuster le stock. Posez-moi une question ou
-                donnez-moi une instruction.
+                Je connais vos lots, vos finances, votre stock et la météo — et je peux préparer des actions
+                pour vous : créer un lot, enregistrer un soin ou une vente, ajuster le stock. Vous validez
+                chaque proposition avant qu'elle soit enregistrée. Posez-moi une question ou une instruction.
               </p>
               <div className="mt-5 grid gap-2">
                 {SUGGESTIONS.map((s) => (
@@ -167,18 +236,45 @@ Météo : ${
               .map((p) => (p.type === "text" ? p.text : ""))
               .join("");
             const isUser = m.role === "user";
+            const pendingIds = (m.parts as any[])
+              .map((p) => p?.output?.__pending_action && actions[p.output.actionId] ? p.output.actionId : null)
+              .filter((id): id is string => !!id);
+            const stillPending = pendingIds.filter((id) => actions[id]?.status === "pending");
             return (
-              <div key={m.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
-                    isUser
-                      ? "bg-primary text-primary-foreground"
-                      : "prose prose-sm max-w-none border bg-card text-foreground dark:prose-invert",
-                  )}
-                >
-                  {isUser ? text : <ReactMarkdown>{text}</ReactMarkdown>}
-                </div>
+              <div key={m.id} className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}>
+                {text && (
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
+                      isUser
+                        ? "bg-primary text-primary-foreground"
+                        : "prose prose-sm max-w-none border bg-card text-foreground dark:prose-invert",
+                    )}
+                  >
+                    {isUser ? text : <ReactMarkdown>{text}</ReactMarkdown>}
+                  </div>
+                )}
+                {pendingIds.length > 0 && (
+                  <div className="w-full max-w-[85%] space-y-2">
+                    {stillPending.length > 1 && (
+                      <button
+                        onClick={() => approveAllInOrder(stillPending)}
+                        className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15"
+                      >
+                        <CheckCheck className="h-3.5 w-3.5" /> Tout approuver ({stillPending.length})
+                      </button>
+                    )}
+                    {pendingIds.map((id) => (
+                      <AiActionCard
+                        key={id}
+                        action={actions[id]}
+                        onApprove={() => approveAction(id)}
+                        onReject={() => rejectAction(id)}
+                        onChange={(payload) => changeActionPayload(id, payload)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

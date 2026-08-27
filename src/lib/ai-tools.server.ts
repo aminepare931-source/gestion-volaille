@@ -3,7 +3,7 @@
 // de la base garantit qu'il ne peut jamais lire/écrire les données d'un autre éleveur.
 import { tool } from "ai";
 import { z } from "zod";
-import { insertRows, selectRows, selectRowsSafe, updateRows, deleteRows } from "@/lib/neon-data-api.server";
+import { selectRows, selectRowsSafe } from "@/lib/neon-data-api.server";
 import { upcomingVaccines } from "@/lib/insights";
 import type { Lot, MortalityRecord } from "@/lib/data";
 
@@ -54,6 +54,24 @@ const STARTER_REFERENCE: Record<
   },
 };
 
+export interface PendingAction {
+  __pending_action: true;
+  actionId: string;
+  kind: string;
+  summary: string;
+  payload: Record<string, unknown>;
+}
+
+/** Ne fait AUCUNE écriture — construit juste une proposition, avec un id
+ * pré-généré (utilisable comme référence par une proposition suivante dans
+ * le même tour, ex: le lot_id d'un create_feed_record qui suit un create_lot
+ * pas encore approuvé). L'écriture réelle se fait uniquement via
+ * /api/actions/commit, après clic sur "Approuver" côté éleveur. */
+function proposeAction(kind: string, summary: string, payload: Record<string, unknown>): PendingAction {
+  const actionId = crypto.randomUUID();
+  return { __pending_action: true, actionId, kind, summary, payload: { ...payload, id: actionId } };
+}
+
 export function buildAiTools(userId: string, token: string) {
   return {
     list_buildings: tool({
@@ -103,7 +121,7 @@ export function buildAiTools(userId: string, token: string) {
 
     create_lot: tool({
       description:
-        "Crée un nouveau lot d'animaux pour l'éleveur. Utilise list_buildings avant pour choisir un building_id cohérent (capacité suffisante, espèce compatible) si l'utilisateur n'en a pas précisé un.",
+        "Crée un nouveau lot d'animaux pour l'éleveur. Utilise list_buildings avant pour choisir un building_id cohérent (capacité suffisante, espèce compatible) si l'utilisateur n'en a pas précisé un. N'écrit rien : propose la création, qui devra être approuvée. Le résultat contient un actionId : réutilise-le comme lot_id si tu enchaînes d'autres propositions liées à ce lot (aliment, soins...) dans la même réponse.",
       inputSchema: z.object({
         name: z.string().describe("Nom du lot, ex: 'Lot Poussins Janvier'"),
         species: z.enum(["volaille", "bovin", "ovin", "caprin", "porcin"]),
@@ -113,20 +131,8 @@ export function buildAiTools(userId: string, token: string) {
         arrival_date: z.string().optional().describe("Format YYYY-MM-DD, défaut = aujourd'hui"),
         building_id: z.string().uuid().nullable().optional().describe("Bâtiment choisi, ou null si aucun bâtiment adapté trouvé"),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "lots", {
-          user_id: userId,
-          name: input.name,
-          species: input.species,
-          breed: input.breed ?? null,
-          initial_count: input.initial_count,
-          purchase_cost: input.purchase_cost ?? 0,
-          arrival_date: input.arrival_date ?? new Date().toISOString().slice(0, 10),
-          building_id: input.building_id ?? null,
-          status: "active",
-        });
-        return row;
-      },
+      execute: async (input) =>
+        proposeAction("create_lot", `Créer le lot "${input.name}" (${input.initial_count} ${input.species}${input.breed ? `, ${input.breed}` : ""})`, input),
     }),
 
     create_feed_record: tool({
@@ -140,35 +146,8 @@ export function buildAiTools(userId: string, token: string) {
         record_date: z.string().optional(),
         stock_item_id: z.string().uuid().nullable().optional().describe("Article de stock d'aliment correspondant, si applicable (voir list_stock)"),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "feed_records", {
-          user_id: userId,
-          lot_id: input.lot_id,
-          feed_type: input.feed_type,
-          quantity_kg: input.quantity_kg,
-          cost: input.cost ?? 0,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-          stock_item_id: input.stock_item_id ?? null,
-        });
-
-        let stockWarning: string | null = null;
-        if (input.stock_item_id) {
-          const [item] = await selectRows<{ id: string; quantity: number; alert_threshold: number; name: string; unit: string }>(
-            token,
-            "stock_items",
-            `select=id,quantity,alert_threshold,name,unit&id=eq.${input.stock_item_id}`,
-          );
-          if (item) {
-            const newQuantity = Math.max(0, Number(item.quantity) - input.quantity_kg);
-            await updateRows(token, "stock_items", `id=eq.${input.stock_item_id}`, { quantity: newQuantity });
-            if (Number(item.alert_threshold) > 0 && newQuantity <= Number(item.alert_threshold)) {
-              stockWarning = `Stock de ${item.name} bas : ${newQuantity} ${item.unit} restant(s).`;
-            }
-          }
-        }
-
-        return { ...row, stock_warning: stockWarning };
-      },
+      execute: async (input) =>
+        proposeAction("create_feed_record", `Distribution de ${input.quantity_kg} kg de "${input.feed_type}"`, input),
     }),
 
     create_health_record: tool({
@@ -185,36 +164,7 @@ export function buildAiTools(userId: string, token: string) {
         quantity_used: z.number().nonnegative().nullable().optional().describe("Quantité du médicament utilisée, décomptée automatiquement du stock"),
         disease_id: z.string().uuid().nullable().optional().describe("Maladie identifiée, si applicable (voir get_disease_info)"),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "health_records", {
-          user_id: userId,
-          lot_id: input.lot_id,
-          type: input.type,
-          name: input.name,
-          cost: input.cost ?? 0,
-          notes: input.notes ?? null,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-          medication_id: input.medication_id ?? null,
-          quantity_used: input.quantity_used ?? null,
-          disease_id: input.disease_id ?? null,
-        });
-
-        let stockWarning: string | null = null;
-        if (input.medication_id && input.quantity_used) {
-          const [med] = await selectRows<{ id: string; quantity: number; name: string }>(
-            token,
-            "medications",
-            `select=id,quantity,name&id=eq.${input.medication_id}`,
-          );
-          if (med) {
-            const newQuantity = Math.max(0, Number(med.quantity) - input.quantity_used);
-            await updateRows(token, "medications", `id=eq.${input.medication_id}`, { quantity: newQuantity });
-            if (newQuantity <= 0) stockWarning = `Stock de ${med.name} épuisé.`;
-          }
-        }
-
-        return { ...row, stock_warning: stockWarning };
-      },
+      execute: async (input) => proposeAction("create_health_record", `Soin "${input.name}" (${input.type})`, input),
     }),
 
     record_mortality: tool({
@@ -225,16 +175,7 @@ export function buildAiTools(userId: string, token: string) {
         cause: z.string().optional(),
         record_date: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "mortality_records", {
-          user_id: userId,
-          lot_id: input.lot_id,
-          count: input.count,
-          cause: input.cause ?? null,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("record_mortality", `${input.count} mort(s)${input.cause ? ` (${input.cause})` : ""}`, input),
     }),
 
     record_weight: tool({
@@ -244,15 +185,7 @@ export function buildAiTools(userId: string, token: string) {
         avg_weight: z.number().positive().describe("Poids moyen en kg"),
         record_date: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "weight_records", {
-          user_id: userId,
-          lot_id: input.lot_id,
-          avg_weight: input.avg_weight,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("record_weight", `Poids moyen : ${input.avg_weight} kg`, input),
     }),
 
     record_sale: tool({
@@ -265,19 +198,8 @@ export function buildAiTools(userId: string, token: string) {
         unit_price: z.number().nonnegative(),
         record_date: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "sales", {
-          user_id: userId,
-          lot_id: input.lot_id ?? null,
-          client_id: input.client_id ?? null,
-          quantity: input.quantity,
-          unit_price: input.unit_price,
-          total: input.quantity * input.unit_price,
-          client: input.client ?? null,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-        });
-        return row;
-      },
+      execute: async (input) =>
+        proposeAction("record_sale", `Vente de ${input.quantity} unité(s) à ${input.unit_price}/unité`, input),
     }),
 
     create_client: tool({
@@ -289,17 +211,7 @@ export function buildAiTools(userId: string, token: string) {
         address: z.string().optional(),
         notes: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "clients", {
-          user_id: userId,
-          name: input.name,
-          type: input.type ?? "individual",
-          phone: input.phone ?? null,
-          address: input.address ?? null,
-          notes: input.notes ?? null,
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("create_client", `Créer le client "${input.name}"`, input),
     }),
 
     list_clients: tool({
@@ -319,19 +231,8 @@ export function buildAiTools(userId: string, token: string) {
         supplier_id: z.string().uuid().nullable().optional().describe("Fournisseur concerné, si applicable (voir list_suppliers)"),
         record_date: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "transactions", {
-          user_id: userId,
-          type: input.type,
-          category: input.category,
-          amount: input.amount,
-          description: input.description ?? null,
-          lot_id: input.lot_id ?? null,
-          supplier_id: input.supplier_id ?? null,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-        });
-        return row;
-      },
+      execute: async (input) =>
+        proposeAction("record_transaction", `${input.type === "expense" ? "Dépense" : "Revenu"} : ${input.category} — ${input.amount}`, input),
     }),
 
     create_supplier: tool({
@@ -343,17 +244,7 @@ export function buildAiTools(userId: string, token: string) {
         address: z.string().optional(),
         notes: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "suppliers", {
-          user_id: userId,
-          name: input.name,
-          type: input.type ?? "general",
-          phone: input.phone ?? null,
-          address: input.address ?? null,
-          notes: input.notes ?? null,
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("create_supplier", `Créer le fournisseur "${input.name}"`, input),
     }),
 
     list_suppliers: tool({
@@ -369,20 +260,8 @@ export function buildAiTools(userId: string, token: string) {
         stock_item_id: z.string().uuid(),
         delta: z.number().describe("Quantité à ajouter (positif) ou retirer (négatif)"),
       }),
-      execute: async ({ stock_item_id, delta }) => {
-        const [item] = await selectRows<{ id: string; quantity: number; alert_threshold: number; unit: string; name: string }>(
-          token,
-          "stock_items",
-          `select=id,quantity,alert_threshold,unit,name&id=eq.${stock_item_id}`,
-        );
-        if (!item) throw new Error("Article de stock introuvable.");
-        const newQuantity = Math.max(0, Number(item.quantity) + delta);
-        const [row] = await updateRows(token, "stock_items", `id=eq.${stock_item_id}`, { quantity: newQuantity });
-        return {
-          ...row,
-          alerte_stock_bas: newQuantity <= Number(item.alert_threshold) && Number(item.alert_threshold) > 0,
-        };
-      },
+      execute: async ({ stock_item_id, delta }) =>
+        proposeAction("adjust_stock", `${delta >= 0 ? "Ajouter" : "Retirer"} ${Math.abs(delta)} au stock`, { stock_item_id, delta }),
     }),
 
     list_lots: tool({
@@ -406,18 +285,7 @@ export function buildAiTools(userId: string, token: string) {
         due_date: z.string().optional().describe("Format YYYY-MM-DD"),
         lot_id: z.string().uuid().nullable().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "tasks", {
-          user_id: userId,
-          title: input.title,
-          description: input.description ?? null,
-          priority: input.priority ?? "medium",
-          due_date: input.due_date ?? null,
-          lot_id: input.lot_id ?? null,
-          created_by: "ia",
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("create_task", `Tâche : "${input.title}"`, input),
     }),
 
     list_tasks: tool({
@@ -429,13 +297,7 @@ export function buildAiTools(userId: string, token: string) {
     complete_task: tool({
       description: "Marque une tâche comme terminée.",
       inputSchema: z.object({ task_id: z.string().uuid() }),
-      execute: async ({ task_id }) => {
-        const [row] = await updateRows(token, "tasks", `id=eq.${task_id}`, {
-          status: "completed",
-          completed_at: new Date().toISOString(),
-        });
-        return row;
-      },
+      execute: async ({ task_id }) => proposeAction("complete_task", "Marquer la tâche comme terminée", { task_id }),
     }),
     get_disease_info: tool({
       description:
@@ -555,30 +417,8 @@ export function buildAiTools(userId: string, token: string) {
         new_status: z.enum(["operational", "maintenance", "broken", "retired"]).optional(),
         record_date: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "maintenance_records", {
-          user_id: userId,
-          equipment_id: input.equipment_id,
-          type: input.type ?? "repair",
-          description: input.description ?? null,
-          cost: input.cost ?? 0,
-          record_date: input.record_date ?? new Date().toISOString().slice(0, 10),
-        });
-
-        let autoTask: unknown = null;
-        if (input.new_status) {
-          const [equip] = await updateRows<{ id: string; name: string }>(token, "equipment", `id=eq.${input.equipment_id}`, { status: input.new_status });
-          if (input.new_status === "broken" && equip) {
-            [autoTask] = await insertRows(token, "tasks", {
-              user_id: userId,
-              title: `Réparer ${equip.name}`,
-              priority: "high",
-              created_by: "ia",
-            });
-          }
-        }
-        return { ...row, tache_creee: autoTask };
-      },
+      execute: async (input) =>
+        proposeAction("record_maintenance", `Maintenance (${input.type})${input.new_status ? ` — nouveau statut : ${input.new_status}` : ""}`, input),
     }),
 
     create_building: tool({
@@ -589,16 +429,7 @@ export function buildAiTools(userId: string, token: string) {
         species: z.enum(["volaille", "bovin", "ovin", "caprin", "porcin"]).nullable().optional().describe("Espèce prévue, ou null si polyvalent"),
         building_type: z.string().optional().describe("Ex: poulailler, étable, bergerie, porcherie"),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "buildings", {
-          user_id: userId,
-          name: input.name,
-          capacity: input.capacity ?? 0,
-          species: input.species ?? null,
-          building_type: input.building_type ?? null,
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("create_building", `Créer le bâtiment "${input.name}"`, input),
     }),
 
     create_stock_item: tool({
@@ -611,18 +442,7 @@ export function buildAiTools(userId: string, token: string) {
         alert_threshold: z.number().nonnegative().default(0),
         unit_cost: z.number().nonnegative().default(0),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "stock_items", {
-          user_id: userId,
-          name: input.name,
-          category: input.category ?? "feed",
-          quantity: input.quantity ?? 0,
-          unit: input.unit ?? "kg",
-          alert_threshold: input.alert_threshold ?? 0,
-          unit_cost: input.unit_cost ?? 0,
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("create_stock_item", `Créer l'article de stock "${input.name}"`, input),
     }),
 
     create_medication: tool({
@@ -635,18 +455,7 @@ export function buildAiTools(userId: string, token: string) {
         expiry_date: z.string().optional().describe("Format YYYY-MM-DD"),
         notes: z.string().optional(),
       }),
-      execute: async (input) => {
-        const [row] = await insertRows(token, "medications", {
-          user_id: userId,
-          name: input.name,
-          category: input.category ?? "other",
-          quantity: input.quantity ?? 0,
-          unit: input.unit ?? "unité",
-          expiry_date: input.expiry_date ?? null,
-          notes: input.notes ?? null,
-        });
-        return row;
-      },
+      execute: async (input) => proposeAction("create_medication", `Ajouter le médicament "${input.name}"`, input),
     }),
 
     update_record: tool({
@@ -657,10 +466,8 @@ export function buildAiTools(userId: string, token: string) {
         id: z.string().uuid(),
         values: z.record(z.string(), z.unknown()).describe("Champs à modifier, ex: { \"status\": \"sold\" }"),
       }),
-      execute: async ({ table, id, values }) => {
-        const [row] = await updateRows(token, table, `id=eq.${id}`, values);
-        return row;
-      },
+      execute: async ({ table, id, values }) =>
+        proposeAction("update_record", `Modifier ${table} : ${Object.entries(values).map(([k, v]) => `${k}=${v}`).join(", ")}`, { table, id, values }),
     }),
 
     delete_record: tool({
@@ -674,10 +481,7 @@ export function buildAiTools(userId: string, token: string) {
         ]),
         id: z.string().uuid(),
       }),
-      execute: async ({ table, id }) => {
-        await deleteRows(token, table, `id=eq.${id}`);
-        return { deleted: true, table, id };
-      },
+      execute: async ({ table, id }) => proposeAction("delete_record", `Supprimer définitivement un enregistrement de ${table}`, { table, id }),
     }),
   };
 }
