@@ -114,21 +114,22 @@ Météo : ${
 
   // Détecte les nouvelles propositions d'action dans les messages et les ajoute à l'état
   // local (sans jamais écraser une action déjà en cours de traitement/modifiée).
+  const seenActionIds = useRef<Set<string>>(new Set());
   useEffect(() => {
-    setActions((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const m of messages) {
-        for (const part of m.parts as any[]) {
-          const output = part?.output;
-          if (output && output.__pending_action && !next[output.actionId]) {
-            next[output.actionId] = { kind: output.kind, summary: output.summary, payload: output.payload, status: "pending" };
-            changed = true;
-          }
+    const toAdd: [string, ActionState][] = [];
+    for (const m of messages) {
+      for (const part of m.parts as any[]) {
+        const output = part?.output;
+        const actionId = output?.actionId;
+        if (output?.__pending_action === true && typeof actionId === "string" && !seenActionIds.current.has(actionId)) {
+          seenActionIds.current.add(actionId);
+          toAdd.push([actionId, { kind: output.kind, summary: output.summary, payload: output.payload, status: "pending" }]);
         }
       }
-      return changed ? next : prev;
-    });
+    }
+    if (toAdd.length > 0) {
+      setActions((prev) => ({ ...prev, ...Object.fromEntries(toAdd) }));
+    }
   }, [messages]);
 
   async function getToken() {
