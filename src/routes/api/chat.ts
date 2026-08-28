@@ -1,7 +1,7 @@
-import { createGroqProvider, pickAvailableGroqModel } from "@/lib/ai-gateway.server";
+import { createGroqProvider, pickAvailableGroqModel, invalidateGroqModelCache } from "@/lib/ai-gateway.server";
 import { buildAiTools } from "@/lib/ai-tools.server";
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, stepCountIs, streamText, type UIMessage } from "ai";
+import { APICallError, convertToModelMessages, stepCountIs, streamText, type UIMessage } from "ai";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 
 type ChatRequestBody = { messages?: unknown; context?: unknown };
@@ -107,6 +107,7 @@ ${ctx || "Aucune donnée transmise."}`;
             stopWhen: stepCountIs(10),
             onError: ({ error }) => {
               console.error(`[chat] streamText error (modèle ${modelId}):`, error);
+              if (error instanceof APICallError && error.statusCode === 429) invalidateGroqModelCache();
             },
           });
 
