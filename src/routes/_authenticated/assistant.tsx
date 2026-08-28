@@ -1,10 +1,10 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
-import { Bot, Send, Sparkles, CheckCheck } from "lucide-react";
+import { Bot, Send, Sparkles, CheckCheck, Plus } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { neon } from "@/integrations/neon/client";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,22 @@ const SUGGESTIONS = [
   "Que dois-je faire vu la météo aujourd'hui ?",
   "Mon stock d'aliment est-il suffisant ?",
 ];
+
+// Persiste la conversation en localStorage : sans ça, changer de page ou fermer
+// l'app fait tout disparaître (useChat ne garde son état qu'en mémoire du composant).
+const CHAT_STORAGE_KEY = "elevage-plus:chat-history";
+const MAX_STORED_MESSAGES = 60;
+
+function loadStoredMessages(): UIMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(CHAT_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 function AssistantPage() {
   const { data: farm } = useFarm();
@@ -102,12 +118,29 @@ Météo : ${
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  const { messages, sendMessage, status, error } = useChat({
+  const { messages, sendMessage, status, error, setMessages } = useChat({
+    messages: useMemo(() => loadStoredMessages(), []),
     transport: new DefaultChatTransport({
       api: "/api/chat",
       headers: (): Record<string, string> => (tokenRef.current ? { Authorization: `Bearer ${tokenRef.current}` } : {}),
     }),
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages.slice(-MAX_STORED_MESSAGES)));
+    } catch {
+      // Stockage plein ou indisponible : sans gravité, la conversation reste utilisable en mémoire.
+    }
+  }, [messages]);
+
+  function newConversation() {
+    setMessages([]);
+    seenActionIds.current.clear();
+    setActions({});
+    if (typeof window !== "undefined") window.localStorage.removeItem(CHAT_STORAGE_KEY);
+  }
 
   const queryClient = useQueryClient();
   const [actions, setActions] = useState<Record<string, ActionState>>({});
@@ -204,7 +237,17 @@ Météo : ${
 
   return (
     <>
-      <PageHeader title="Assistant IA" subtitle="Coach Élevage — conseils, alertes et actions directes" />
+      <PageHeader
+        title="Assistant IA"
+        subtitle="Coach Élevage — conseils, alertes et actions directes"
+        action={
+          messages.length > 0 ? (
+            <Button variant="outline" size="sm" onClick={newConversation}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" /> Nouvelle conversation
+            </Button>
+          ) : undefined
+        }
+      />
       <div className="flex h-[calc(100vh-9rem)] flex-col md:h-[calc(100vh-8.5rem)]">
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4 md:p-8">
           {messages.length === 0 && (
