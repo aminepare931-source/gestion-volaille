@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
-import { Bot, Send, Sparkles, CheckCheck, Plus } from "lucide-react";
+import { Bot, Send, Sparkles, CheckCheck, Plus, Mic, MicOff } from "lucide-react";
 import { PageHeader } from "@/components/AppLayout";
 import { neon } from "@/integrations/neon/client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import {
 } from "@/lib/data";
 import { useWeather } from "@/lib/weather";
 import { formatMoney, formatNumber } from "@/lib/format";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/assistant")({
   component: AssistantPage,
@@ -223,6 +224,38 @@ Météo : ${
     inputRef.current?.focus();
   }, []);
 
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  function toggleVoiceInput() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("La dictée vocale n'est pas disponible sur ce navigateur. Essayez avec Chrome.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "fr-FR";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript ?? "";
+      if (transcript) setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+    };
+    recognition.onerror = () => {
+      setListening(false);
+      toast.error("Je n'ai pas bien entendu, réessayez.");
+    };
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
+  }
+
   async function submit(text: string) {
     const t = text.trim();
     if (!t || busy) return;
@@ -351,9 +384,19 @@ Météo : ${
                 }
               }}
               rows={1}
-              placeholder="Écrivez votre question…"
+              placeholder={listening ? "Je vous écoute…" : "Écrivez ou dictez votre question…"}
               className="max-h-32 flex-1 resize-none rounded-xl border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary"
             />
+            <Button
+              type="button"
+              size="icon"
+              variant={listening ? "destructive" : "outline"}
+              className="h-11 w-11 shrink-0 rounded-xl"
+              onClick={toggleVoiceInput}
+              title="Dicter au lieu d'écrire"
+            >
+              {listening ? <MicOff className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4" />}
+            </Button>
             <Button size="icon" className="h-11 w-11 shrink-0 rounded-xl" disabled={busy || !input.trim()} onClick={() => submit(input)}>
               <Send className="h-4 w-4" />
             </Button>
