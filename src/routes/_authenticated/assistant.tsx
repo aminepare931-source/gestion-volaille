@@ -224,6 +224,12 @@ Météo : ${
     inputRef.current?.focus();
   }, []);
 
+  useEffect(() => {
+    // Arrête le micro si l'utilisateur quitte la page pendant qu'il dicte —
+    // sinon la reconnaissance vocale continue de tourner en arrière-plan.
+    return () => recognitionRef.current?.stop();
+  }, []);
+
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<any>(null);
 

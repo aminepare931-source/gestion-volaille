@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { CommandSearch } from "@/components/CommandSearch";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const nav = [
   { to: "/dashboard", label: "Accueil", icon: LayoutDashboard },
@@ -118,7 +119,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Main */}
-      <main className="pb-24 md:ml-60 md:pb-8">{children}</main>
+      <main className="pb-24 md:ml-60 md:pb-8">
+        <ErrorBoundary label="Cette page">{children}</ErrorBoundary>
+      </main>
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t bg-card/95 backdrop-blur md:hidden">
